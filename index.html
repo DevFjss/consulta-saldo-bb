@@ -58,6 +58,7 @@
             border-spacing: 0;
             width: max-content;
             min-width: 100%;
+            table-layout: fixed; /* Essencial para o funcionamento do resize manual */
         }
 
         th, td {
@@ -65,6 +66,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             position: relative;
+            box-sizing: border-box;
         }
 
         thead th {
@@ -113,12 +115,13 @@
             background-color: #fef9c3 !important;
         }
 
+        /* Divisor Arrastável */
         .resizer {
             position: absolute;
             right: 0;
             top: 0;
             height: 100%;
-            width: 7px;
+            width: 8px;
             background: transparent;
             cursor: col-resize;
             user-select: none;
@@ -197,13 +200,13 @@
         <!-- Conteúdo Principal -->
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-            <!-- Data/Hora Célula A1 -->
-            <div id="sheetUpdateBox" class="bg-customBlue-500 text-white p-3.5 rounded-xl flex items-center justify-between text-xs shadow-sm">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="clock" class="w-4 h-4 text-customBlue-200"></i>
-                    <span><strong>Data/Hora da Planilha (Célula A1):</strong> <span id="sheetDateA1">Carregando...</span></span>
+            <!-- Data/Hora Célula A1 com Fonte Aumentada -->
+            <div id="sheetUpdateBox" class="bg-customBlue-500 text-white p-4 rounded-xl flex items-center justify-between text-base shadow-sm">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="clock" class="w-6 h-6 text-customBlue-200"></i>
+                    <span><strong>Data/Hora da Planilha (Célula A1):</strong> <span id="sheetDateA1" class="text-lg font-extrabold text-amber-300 ml-1">Carregando...</span></span>
                 </div>
-                <span class="text-customBlue-200 font-medium italic">Sincronização em tempo real</span>
+                <span class="text-sm text-customBlue-200 font-medium italic">Sincronização em tempo real</span>
             </div>
 
             <!-- Gerenciador de Exibição de Colunas -->
@@ -217,10 +220,7 @@
                     <span class="text-xs text-customBlue-700">Destaque na coluna CPF em <span class="text-amber-600 font-bold">Amarelo</span></span>
                 </div>
 
-                <!-- Lista para Seleção das Colunas + Opção Master de Selecionar Tudo -->
                 <div id="colMenuContainer" class="hidden p-3 bg-slate-900 rounded-lg border border-slate-700 flex flex-col space-y-2 text-xs text-slate-100">
-                    
-                    <!-- Botão Master para Ocultar ou Reexibir Tudo -->
                     <div class="pb-2 border-b border-slate-700 flex items-center justify-between">
                         <label class="flex items-center gap-2 cursor-pointer font-bold text-amber-400">
                             <input type="checkbox" id="selectAllCols" checked class="accent-amber-500 w-4 h-4">
@@ -360,11 +360,10 @@
         </main>
     </div>
 
-    <!-- Script de Processamento -->
+    <!-- Script de Processamento e Redimensionamento de Colunas -->
     <script>
         const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
         const SHEET_NAME = 'Cartão Manutenção';
-        // Intervalo até a Coluna L
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:L`;
 
         let rawData = [];
@@ -409,7 +408,7 @@
                         document.getElementById('sheetDateA1').textContent = rows[0][0];
                     }
 
-                    // Descarta Linhas 1 e 2. Inicia leitura a partir da LINHA 3.
+                    // Descarta Linhas 1 e 2. Inicia a leitura a partir da LINHA 3
                     const dataRows = rows.slice(2);
 
                     rawData = dataRows.map(row => ({
@@ -428,6 +427,7 @@
 
                     populateDropdowns();
                     applyFilters();
+                    initResizableColumns();
                 }
             });
         }
@@ -536,6 +536,48 @@
             });
         }
 
+        /* LÓGICA DE REDIMENSIONAMENTO MANUAL DAS COLUNAS */
+        function initResizableColumns() {
+            const resizers = document.querySelectorAll('.resizer');
+
+            resizers.forEach(resizer => {
+                let startX, startWidth, th;
+
+                resizer.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    th = resizer.parentElement;
+                    startX = e.pageX;
+                    startWidth = th.offsetWidth;
+
+                    resizer.classList.add('resizing');
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                function onMouseMove(e) {
+                    const width = startWidth + (e.pageX - startX);
+                    if (width > 50) { // Largura mínima
+                        th.style.width = `${width}px`;
+
+                        // Ajuste para a segunda coluna congelada se a primeira for alterada
+                        if (th.classList.contains('col-idx-0')) {
+                            const col2 = document.querySelector('.sticky-col-2');
+                            if (col2) {
+                                col2.style.left = `${width}px`;
+                            }
+                        }
+                    }
+                }
+
+                function onMouseUp() {
+                    resizer.classList.remove('resizing');
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+            });
+        }
+
         // Selecionar/Desmarcar tudo
         document.getElementById('selectAllCols').addEventListener('change', (e) => {
             const isChecked = e.target.checked;
@@ -549,7 +591,6 @@
             cb.addEventListener('change', () => {
                 applyColumnVisibility();
                 
-                // Atualiza o estado do checkbox master caso algum individual seja desmarcado
                 const allChecked = Array.from(document.querySelectorAll('.col-vis-toggle')).every(c => c.checked);
                 document.getElementById('selectAllCols').checked = allChecked;
             });
