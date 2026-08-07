@@ -394,43 +394,51 @@
         }
 
         function loadSheetData() {
-            const statusEl = document.getElementById('loadingStatus');
-            statusEl.classList.remove('hidden');
+    const statusEl = document.getElementById('loadingStatus');
+    statusEl.classList.remove('hidden');
 
-            Papa.parse(CSV_URL, {
-                download: true,
-                header: false,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    statusEl.classList.add('hidden');
-                    const rows = results.data;
-                    if (!rows || rows.length === 0) return;
+    Papa.parse(CSV_URL, {
+        download: true,
+        header: false,
+        skipEmptyLines: true,
+        complete: function(results) {
+            statusEl.classList.add('hidden');
+            const rows = results.data;
+            if (!rows || rows.length === 0) return;
 
-                    if (rows[0] && rows[0][0]) {
-                        document.getElementById('sheetDateA1').textContent = rows[0][0];
-                    }
+            // Pega a Data/Hora da Célula A1 (Linha 1)
+            if (rows[0] && rows[0][0]) {
+                document.getElementById('sheetDateA1').textContent = rows[0][0];
+            }
 
-                    const dataRows = rows.slice(2);
+            // CORREÇÃO: .slice(1) ignora apenas a linha A1.
+            // A linha 2 vira índice 0, e a LINHA 3 vira o índice 1 dos dados.
+            const dataRows = rows.slice(1);
 
-                    rawData = dataRows.map(row => ({
-                        nte: row[0] ? row[0].toString().trim() : '',
-                        municipio: row[1] ? row[1].toString().trim() : '',
-                        codigoSec: row[2] ? row[2].toString().trim() : '',
-                        codigoInep: row[3] ? row[3].toString().trim() : '',
-                        undEscolar: row[4] ? row[4].toString().trim() : '',
-                        cartao: row[5] ? row[5].toString().trim() : '',
-                        nomePortador: row[6] ? row[6].toString().trim() : '',
-                        cpf: row[7] ? row[7].toString().trim() : '',
-                        limiteImplantado: parseCurrency(row[8]),
-                        limiteDisponivel: parseCurrency(row[9]),
-                        despesas: parseCurrency(row[10])
-                    })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
-
-                    populateDropdowns();
-                    applyFilters();
-                }
+            rawData = dataRows.map(row => ({
+                nte: row[0] ? row[0].toString().trim() : '',
+                municipio: row[1] ? row[1].toString().trim() : '',
+                codigoSec: row[2] ? row[2].toString().trim() : '',
+                codigoInep: row[3] ? row[3].toString().trim() : '',
+                undEscolar: row[4] ? row[4].toString().trim() : '',
+                cartao: row[5] ? row[5].toString().trim() : '',
+                nomePortador: row[6] ? row[6].toString().trim() : '',
+                cpf: row[7] ? row[7].toString().trim() : '',
+                limiteImplantado: parseCurrency(row[8]),
+                limiteDisponivel: parseCurrency(row[9]),
+                despesas: parseCurrency(row[10])
+            })).filter(item => {
+                // Filtro para ignorar caso a linha seja o próprio cabeçalho "NTE" ou esteja vazia
+                const isHeader = item.nte.toUpperCase() === 'NTE' || item.codigoSec.toUpperCase().includes('CÓDIGO');
+                const hasData = item.nte !== '' || item.municipio !== '' || item.codigoSec !== '';
+                return !isHeader && hasData;
             });
+
+            populateDropdowns();
+            applyFilters();
         }
+    });
+}
 
         function populateDropdowns() {
             const selectNTE = document.getElementById('selectNTE');
