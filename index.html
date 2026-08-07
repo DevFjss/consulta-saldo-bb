@@ -2,107 +2,579 @@
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Painel - Cartão Manutenção</title>
-
-    <!-- Tailwind CSS (Estilização Base) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Cartão Manutenção</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0c3a54',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PapaParse para ler CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-    <!-- ========================================================= -->
-    <!-- 1. BLOCO CSS (CONGELAMENTO E ALÇA DE REDIMENSIONAMENTO)   -->
-    <!-- ========================================================= -->
     <style>
-        /* Container com rolagem interna */
-        .table-container {
-            max-height: 65vh;
-            overflow: auto;
+        /* Personalização da Barra de Rolagem */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
         }
 
-        /* 1. CSS para Congelar o Cabeçalho */
+        /* Container da Tabela com Rolagem Interna */
+        .table-container {
+            max-height: 60vh;
+            overflow: auto;
+            position: relative;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: max-content;
+            min-width: 100%;
+        }
+
+        th, td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+        }
+
+        /* ---------------------------------------------------------
+           1. FIXAÇÃO DO CABEÇALHO (Fundo Sólido Opaco para Não Misturar Texto)
+           --------------------------------------------------------- */
         thead th {
             position: sticky;
             top: 0;
-            z-index: 20;
+            z-index: 25;
+            background-color: #1f2937 !important; /* Opaco no tema escuro */
+            color: #f3f4f6;
+        }
+        html:not(.dark) thead th {
+            background-color: #f3f4f6 !important; /* Opaco no tema claro */
+            color: #1f2937;
         }
 
-        /* 2. CSS para Congelar a 1ª e 2ª Colunas */
+        /* ---------------------------------------------------------
+           2. CONGELAMENTO DAS COLUNAS FIXAS (NTE E MUNICÍPIO)
+           --------------------------------------------------------- */
         .sticky-col-1 {
             position: sticky;
             left: 0;
             z-index: 10;
+            background-color: #111827 !important;
+        }
+        html:not(.dark) .sticky-col-1 {
+            background-color: #ffffff !important;
         }
 
         .sticky-col-2 {
             position: sticky;
-            left: 110px; /* Posição ajustada dinamicamente pelo JS ao redimensionar */
+            left: 110px;
             z-index: 10;
+            background-color: #111827 !important;
+        }
+        html:not(.dark) .sticky-col-2 {
+            background-color: #ffffff !important;
         }
 
-        /* 3. CSS para a Alça de Redimensionamento */
+        /* Sobreposição do Topo com as Colunas Congeladas */
+        thead th.sticky-col-1,
+        thead th.sticky-col-2 {
+            z-index: 35 !important;
+            background-color: #1f2937 !important;
+        }
+        html:not(.dark) thead th.sticky-col-1,
+        html:not(.dark) thead th.sticky-col-2 {
+            background-color: #f3f4f6 !important;
+        }
+
+        /* Sombra na Borda das Colunas Fixas */
+        .sticky-col-2::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -5px;
+            bottom: 0;
+            width: 5px;
+            pointer-events: none;
+            box-shadow: inset -10px 0 8px -8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ---------------------------------------------------------
+           3. MARCAÇÃO EM AMARELO
+           --------------------------------------------------------- */
+        .col-highlight {
+            border-left: 2px solid #eab308 !important;
+            border-right: 2px solid #eab308 !important;
+            background-color: rgba(234, 179, 8, 0.08) !important;
+        }
+
+        /* Redimensionamento das Colunas */
         .resizer {
             position: absolute;
             right: 0;
             top: 0;
             height: 100%;
             width: 7px;
+            background: transparent;
             cursor: col-resize;
             user-select: none;
+            touch-action: none;
+            z-index: 40;
         }
-
         .resizer:hover, .resizer.resizing {
-            background-color: #3b82f6; /* Destaque azul ao arrastar */
+            background: #3b82f6;
         }
     </style>
 </head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
 
-<body>
-    <!-- Estrutura do Dashboard e Tabela -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th class="sticky-col-1">NTE <div class="resizer"></div></th>
-                    <th class="sticky-col-2">Município <div class="resizer"></div></th>
-                    <th>Código SEC <div class="resizer"></div></th>
-                    <!-- Demais colunas... -->
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Linhas dinâmicas preenchidas via JS -->
-            </tbody>
-        </table>
+    <!-- Header Navigation -->
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-3">
+            <button id="toggleSidebar" class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 text-white p-2 rounded-lg">
+                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                    Painel Cartão Manutenção
+                </h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="loadingStatus" class="hidden flex items-center gap-2 text-xs text-blue-500 font-medium">
+                <i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>
+                <span>Carregando dados...</span>
+            </div>
+
+            <!-- Botão Alternar Tema -->
+            <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 text-sm font-medium">
+                <i id="themeIconSun" data-lucide="sun" class="w-5 h-5 text-yellow-400 hidden"></i>
+                <i id="themeIconMoon" data-lucide="moon" class="w-5 h-5 text-indigo-400"></i>
+                <span id="themeText" class="hidden sm:inline">Escuro</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 z-30">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Filtros de Validação</span>
+                <button id="resetFilters" class="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Limpar
+                </button>
+            </div>
+
+            <div class="p-4 space-y-6 overflow-y-auto flex-1">
+                <!-- Filtro NTE -->
+                <div>
+                    <label for="selectNTE" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4 text-blue-500"></i>
+                        NTE (Coluna A)
+                    </label>
+                    <select id="selectNTE" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 outline-none transition-colors">
+                        <option value="">Todos os NTEs</option>
+                    </select>
+                </div>
+
+                <!-- Filtro Município -->
+                <div>
+                    <label for="selectMunicipio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i>
+                        Município (Coluna B)
+                    </label>
+                    <select id="selectMunicipio" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 outline-none transition-colors">
+                        <option value="">Todos os Municípios</option>
+                    </select>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 space-y-2">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Registros Encontrados</div>
+                    <div id="recordsCount" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+            <!-- Data / Hora extraída da Célula A1 da Sheet -->
+            <div id="sheetUpdateBox" class="bg-blue-900/30 border border-blue-500/30 p-3 rounded-xl flex items-center justify-between text-xs text-blue-300">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="clock" class="w-4 h-4 text-blue-400"></i>
+                    <span><strong>Data/Hora da Planilha (Célula A1):</strong> <span id="sheetDateA1">Carregando...</span></span>
+                </div>
+                <span class="text-gray-400 italic">Sincronização em tempo real</span>
+            </div>
+
+            <!-- Gerenciador de Colunas (Botão para Ocultar/Reexibir e Marcações) -->
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-3">
+                <div class="flex items-center justify-between">
+                    <button id="toggleColMenu" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors">
+                        <i data-lucide="columns" class="w-4 h-4 text-amber-500"></i>
+                        Ocultar / Exibir Colunas
+                        <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                    </button>
+                    <span class="text-xs text-gray-400">Destaque na coluna do CPF em <span class="text-amber-400 font-bold">Amarelo</span></span>
+                </div>
+
+                <!-- Lista de Marcação com Checkboxes -->
+                <div id="colMenuContainer" class="hidden p-4 bg-gray-50 dark:bg-gray-750 rounded-lg border border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="0" checked class="col-vis-toggle"> NTE</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="1" checked class="col-vis-toggle"> Município</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="2" checked class="col-vis-toggle"> Código SEC</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="3" checked class="col-vis-toggle"> Código Inep</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="4" checked class="col-vis-toggle"> Und. Escolar</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="5" checked class="col-vis-toggle"> Cartão</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="6" checked class="col-vis-toggle"> Nome Portador</label>
+                    <label class="flex items-center gap-2 cursor-pointer font-bold text-amber-500"><input type="checkbox" data-col="7" checked class="col-vis-toggle"> CPF (Col H)</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="8" checked class="col-vis-toggle"> Limite Implantado</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="9" checked class="col-vis-toggle"> Limite Disponível</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="10" checked class="col-vis-toggle"> Despesas</label>
+                </div>
+            </div>
+
+            <!-- Duas Caixas de Pesquisa (SEC e CPF) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Caixa de Pesquisa 1: Código SEC -->
+                <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Pesquisar por Código SEC (Coluna C)</label>
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3"></i>
+                        <input type="text" id="searchSEC" placeholder="Digite o Código SEC..." class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Caixa de Pesquisa 2: CPF -->
+                <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <label class="block text-xs font-medium text-amber-400 mb-1">Pesquisar por CPF (Coluna H)</label>
+                    <div class="relative">
+                        <i data-lucide="user-check" class="w-4 h-4 text-amber-400 absolute left-3 top-3"></i>
+                        <input type="text" id="searchCPF" placeholder="Digite o CPF..." class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-700/50 border border-amber-500/40 rounded-lg text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div class="space-y-1">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Implantado</span>
+                        <div id="cardImplantado" class="text-2xl font-extrabold text-blue-600 dark:text-blue-400">R$ 0,00</div>
+                    </div>
+                    <div class="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
+                        <i data-lucide="wallet" class="w-8 h-8"></i>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div class="space-y-1">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Disponível</span>
+                        <div id="cardDisponivel" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">R$ 0,00</div>
+                    </div>
+                    <div class="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-600 dark:text-emerald-400">
+                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div class="space-y-1">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Despesas</span>
+                        <div id="cardDespesas" class="text-2xl font-extrabold text-amber-600 dark:text-amber-400">R$ 0,00</div>
+                    </div>
+                    <div class="p-3 bg-amber-100 dark:bg-amber-900/40 rounded-xl text-amber-600 dark:text-amber-400">
+                        <i data-lucide="trending-down" class="w-8 h-8"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Dados -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="table-container">
+                    <table id="dataTable" class="text-left text-sm">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-3.5 sticky-col-1 col-idx-0" style="width: 110px;">NTE<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 sticky-col-2 col-idx-1" style="width: 160px;">Município<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-2" style="width: 130px;">Código SEC<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-3" style="width: 130px;">Código Inep<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-4" style="width: 250px;">Und. Escolar<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-5" style="width: 150px;">Cartão<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-6" style="width: 200px;">Nome Portador<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-7 text-amber-400 font-bold" style="width: 150px;">CPF (Col H)<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-8 text-right" style="width: 160px;">Limite Implantado<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-9 text-right" style="width: 160px;">Limite Disponível<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-10 text-right" style="width: 140px;">Despesas<div class="resizer"></div></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-300">
+                            <tr>
+                                <td colspan="11" class="text-center py-8 text-gray-400">
+                                    Carregando informações da planilha...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- 2. BLOCO JAVASCRIPT (LÓGICA DE ARRASTAR E RENDERIZAR)     -->
-    <!-- ========================================================= -->
+    <!-- Script de Funcionamento Geral -->
     <script>
-        // Lógica para permitir arrastar e redimensionar no CSS
-        function initColumnResizing() {
-            const cols = document.querySelectorAll('th');
-            cols.forEach(col => {
-                const resizer = col.querySelector('.resizer');
-                if (!resizer) return;
+        const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
+        const SHEET_NAME = 'Cartão Manutenção';
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:K`;
 
-                resizer.addEventListener('mousedown', (e) => {
-                    let startX = e.clientX;
-                    let startWidth = col.offsetWidth;
+        let rawData = [];
+        let filteredData = [];
 
-                    const onMouseMove = (e) => {
-                        const newWidth = Math.max(60, startWidth + (e.clientX - startX));
-                        col.style.width = `${newWidth}px`;
-                        updateStickyPositions(); // Recalcula a posição sticky da 2ª coluna
-                    };
+        lucide.createIcons();
 
-                    const onMouseUp = () => {
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-                    };
+        // Alternar Menu Retrátil de Colunas
+        document.getElementById('toggleColMenu').addEventListener('click', () => {
+            document.getElementById('colMenuContainer').classList.toggle('hidden');
+        });
 
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
+        // Alternar Tema
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIconSun = document.getElementById('themeIconSun');
+        const themeIconMoon = document.getElementById('themeIconMoon');
+        const themeText = document.getElementById('themeText');
+
+        function setTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                themeIconSun.classList.remove('hidden');
+                themeIconMoon.classList.add('hidden');
+                themeText.textContent = 'Claro';
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeIconSun.classList.add('hidden');
+                themeIconMoon.classList.remove('hidden');
+                themeText.textContent = 'Escuro';
+            }
+        }
+        setTheme(true);
+        themeToggleBtn.addEventListener('click', () => {
+            setTheme(!document.documentElement.classList.contains('dark'));
+        });
+
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-ml-72');
+        });
+
+        function parseCurrency(value) {
+            if (!value) return 0;
+            if (typeof value === 'number') return value;
+            let cleanStr = value.toString().replace(/[^0-9,-]/g, '').replace(',', '.');
+            let parsed = parseFloat(cleanStr);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function formatCurrency(num) {
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function loadSheetData() {
+            const statusEl = document.getElementById('loadingStatus');
+            statusEl.classList.remove('hidden');
+
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    statusEl.classList.add('hidden');
+                    const rows = results.data;
+                    if (!rows || rows.length === 0) return;
+
+                    // Data e Hora pegando da Célula A1
+                    if (rows[0] && rows[0][0]) {
+                        document.getElementById('sheetDateA1').textContent = rows[0][0];
+                    }
+
+                    // Lê os dados pulando o título e o cabeçalho
+                    const dataRows = rows.slice(2);
+
+                    rawData = dataRows.map(row => ({
+                        nte: row[0] ? row[0].toString().trim() : '',
+                        municipio: row[1] ? row[1].toString().trim() : '',
+                        codigoSec: row[2] ? row[2].toString().trim() : '',
+                        codigoInep: row[3] ? row[3].toString().trim() : '',
+                        undEscolar: row[4] ? row[4].toString().trim() : '',
+                        cartao: row[5] ? row[5].toString().trim() : '',
+                        nomePortador: row[6] ? row[6].toString().trim() : '',
+                        cpf: row[7] ? row[7].toString().trim() : '', // CPF na Coluna H (Índice 7)
+                        limiteImplantado: parseCurrency(row[8]),
+                        limiteDisponivel: parseCurrency(row[9]),
+                        despesas: parseCurrency(row[10])
+                    })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
+
+                    populateDropdowns();
+                    applyFilters();
+                }
+            });
+        }
+
+        function populateDropdowns() {
+            const selectNTE = document.getElementById('selectNTE');
+            const selectMunicipio = document.getElementById('selectMunicipio');
+
+            const uniqueNTE = [...new Set(rawData.map(i => i.nte).filter(Boolean))].sort();
+            const uniqueMunicipio = [...new Set(rawData.map(i => i.municipio).filter(Boolean))].sort();
+
+            selectNTE.innerHTML = '<option value="">Todos os NTEs</option>';
+            uniqueNTE.forEach(nte => {
+                const opt = document.createElement('option');
+                opt.value = nte;
+                opt.textContent = nte;
+                selectNTE.appendChild(opt);
+            });
+
+            selectMunicipio.innerHTML = '<option value="">Todos os Municípios</option>';
+            uniqueMunicipio.forEach(mun => {
+                const opt = document.createElement('option');
+                opt.value = mun;
+                opt.textContent = mun;
+                selectMunicipio.appendChild(opt);
+            });
+        }
+
+        function applyFilters() {
+            const nteVal = document.getElementById('selectNTE').value;
+            const munVal = document.getElementById('selectMunicipio').value;
+            const secVal = document.getElementById('searchSEC').value.trim().toLowerCase();
+            const cpfVal = document.getElementById('searchCPF').value.trim().toLowerCase();
+
+            filteredData = rawData.filter(item => {
+                const matchNTE = !nteVal || item.nte === nteVal;
+                const matchMun = !munVal || item.municipio === munVal;
+                const matchSEC = !secVal || item.codigoSec.toLowerCase().includes(secVal);
+                const matchCPF = !cpfVal || item.cpf.toLowerCase().includes(cpfVal);
+                return matchNTE && matchMun && matchSEC && matchCPF;
+            });
+
+            updateCards();
+            renderTable();
+        }
+
+        function updateCards() {
+            let totalImplantado = 0;
+            let totalDisponivel = 0;
+            let totalDespesas = 0;
+
+            filteredData.forEach(item => {
+                totalImplantado += item.limiteImplantado;
+                totalDisponivel += item.limiteDisponivel;
+                totalDespesas += item.despesas;
+            });
+
+            document.getElementById('cardImplantado').textContent = formatCurrency(totalImplantado);
+            document.getElementById('cardDisponivel').textContent = formatCurrency(totalDisponivel);
+            document.getElementById('cardDespesas').textContent = formatCurrency(totalDespesas);
+            document.getElementById('recordsCount').textContent = filteredData.length;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            filteredData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 dark:hover:bg-gray-750/50 transition-colors";
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white sticky-col-1 col-idx-0">${item.nte}</td>
+                    <td class="px-4 py-3 sticky-col-2 col-idx-1">${item.municipio}</td>
+                    <td class="px-4 py-3 font-mono text-xs col-idx-2">${item.codigoSec}</td>
+                    <td class="px-4 py-3 font-mono text-xs col-idx-3">${item.codigoInep}</td>
+                    <td class="px-4 py-3 font-medium col-idx-4">${item.undEscolar}</td>
+                    <td class="px-4 py-3 font-mono text-xs col-idx-5">${item.cartao}</td>
+                    <td class="px-4 py-3 col-idx-6">${item.nomePortador}</td>
+                    <td class="px-4 py-3 font-mono text-xs col-idx-7 col-highlight font-bold text-amber-400">${item.cpf}</td>
+                    <td class="px-4 py-3 text-right font-medium text-blue-600 dark:text-blue-400 col-idx-8">${formatCurrency(item.limiteImplantado)}</td>
+                    <td class="px-4 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400 col-idx-9">${formatCurrency(item.limiteDisponivel)}</td>
+                    <td class="px-4 py-3 text-right font-medium text-amber-600 dark:text-amber-400 col-idx-10">${formatCurrency(item.despesas)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            applyColumnVisibility();
+        }
+
+        // Aplica Ocultar e Exibir
+        function applyColumnVisibility() {
+            const checkboxes = document.querySelectorAll('.col-vis-toggle');
+            checkboxes.forEach(cb => {
+                const colIdx = cb.getAttribute('data-col');
+                const isChecked = cb.checked;
+                const cells = document.querySelectorAll(`.col-idx-${colIdx}`);
+                cells.forEach(cell => {
+                    cell.style.display = isChecked ? '' : 'none';
                 });
             });
         }
+
+        document.querySelectorAll('.col-vis-toggle').forEach(cb => {
+            cb.addEventListener('change', applyColumnVisibility);
+        });
+
+        // Eventos dos Filtros
+        document.getElementById('selectNTE').addEventListener('change', applyFilters);
+        document.getElementById('selectMunicipio').addEventListener('change', applyFilters);
+        document.getElementById('searchSEC').addEventListener('input', applyFilters);
+        document.getElementById('searchCPF').addEventListener('input', applyFilters);
+
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            document.getElementById('selectNTE').value = '';
+            document.getElementById('selectMunicipio').value = '';
+            document.getElementById('searchSEC').value = '';
+            document.getElementById('searchCPF').value = '';
+            applyFilters();
+        });
+
+        loadSheetData();
     </script>
 </body>
 </html>
