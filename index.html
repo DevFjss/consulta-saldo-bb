@@ -2,576 +2,107 @@
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel - Cartão Manutenção</title>
-    <!-- Tailwind CSS para Estilização Geral -->
+
+    <!-- Tailwind CSS (Estilização Base) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#075985',
-                            800: '#0c4a6e',
-                            900: '#0c3a54',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- PapaParse para ler CSV -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <!-- ========================================================= -->
-    <!-- ESTILOS CSS EM EMBUTIDOS (CONGELAMENTO E REDIMENSIONAMENTO)-->
+    <!-- 1. BLOCO CSS (CONGELAMENTO E ALÇA DE REDIMENSIONAMENTO)   -->
     <!-- ========================================================= -->
     <style>
-        /* Personalização do Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4b5563;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280;
-        }
-
-        /* Container da Tabela com Rolagem Interna */
+        /* Container com rolagem interna */
         .table-container {
             max-height: 65vh;
             overflow: auto;
-            position: relative;
         }
 
-        table {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: max-content;
-            min-width: 100%;
-        }
-
-        th, td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            position: relative;
-        }
-
-        /* ---------------------------------------------------------
-           1. CSS PARA CONGELAR O CABEÇALHO (Sticky Top)
-           --------------------------------------------------------- */
+        /* 1. CSS para Congelar o Cabeçalho */
         thead th {
             position: sticky;
             top: 0;
             z-index: 20;
         }
 
-        /* ---------------------------------------------------------
-           2. CSS PARA CONGELAR AS COLUNAS (Sticky Left)
-           --------------------------------------------------------- */
-        /* Congela a 1ª Coluna (NTE - Coluna A) */
+        /* 2. CSS para Congelar a 1ª e 2ª Colunas */
         .sticky-col-1 {
             position: sticky;
             left: 0;
             z-index: 10;
         }
-        thead th.sticky-col-1 {
-            z-index: 30; /* Cabeçalho congelado fica acima das linhas */
-        }
 
-        /* Congela a 2ª Coluna (Município - Coluna B) */
         .sticky-col-2 {
             position: sticky;
-            left: 110px; /* Posição ajustada via CSS e re-calculada via JS */
+            left: 110px; /* Posição ajustada dinamicamente pelo JS ao redimensionar */
             z-index: 10;
         }
-        thead th.sticky-col-2 {
-            z-index: 30;
-        }
 
-        /* Sombra na borda direita da coluna congelada */
-        .sticky-col-2::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: -5px;
-            bottom: 0;
-            width: 5px;
-            pointer-events: none;
-            box-shadow: inset -10px 0 8px -8px rgba(0, 0, 0, 0.35);
-        }
-
-        /* ---------------------------------------------------------
-           3. CSS PARA A ALÇA DE REDIMENSIONAMENTO MANUAL (Resizer)
-           --------------------------------------------------------- */
+        /* 3. CSS para a Alça de Redimensionamento */
         .resizer {
             position: absolute;
             right: 0;
             top: 0;
             height: 100%;
             width: 7px;
-            background: transparent;
-            cursor: col-resize; /* Cursor indicando redimensionamento */
+            cursor: col-resize;
             user-select: none;
-            touch-action: none;
-            z-index: 40;
         }
-        
-        /* Destaca a linha azul ao passar o mouse ou arrastar */
+
         .resizer:hover, .resizer.resizing {
-            background: #3b82f6;
+            background-color: #3b82f6; /* Destaque azul ao arrastar */
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
 
-    <!-- Header Navigation -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shadow-sm">
-        <div class="flex items-center gap-3">
-            <button id="toggleSidebar" class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
-                <i data-lucide="menu" class="w-6 h-6"></i>
-            </button>
-            <div class="flex items-center gap-2">
-                <div class="bg-blue-600 text-white p-2 rounded-lg">
-                    <i data-lucide="credit-card" class="w-5 h-5"></i>
-                </div>
-                <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                    Painel Cartão Manutenção
-                </h1>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-4">
-            <!-- Status de Carga -->
-            <div id="loadingStatus" class="hidden flex items-center gap-2 text-xs text-blue-500 font-medium">
-                <i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>
-                <span>Carregando dados...</span>
-            </div>
-
-            <!-- Theme Toggle Button -->
-            <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 text-sm font-medium">
-                <i id="themeIconSun" data-lucide="sun" class="w-5 h-5 text-yellow-400 hidden"></i>
-                <i id="themeIconMoon" data-lucide="moon" class="w-5 h-5 text-indigo-400"></i>
-                <span id="themeText" class="hidden sm:inline">Escuro</span>
-            </button>
-        </div>
-    </header>
-
-    <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar -->
-        <aside id="sidebar" class="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 z-30">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Filtros de Validação</span>
-                <button id="resetFilters" class="text-xs text-blue-500 hover:underline flex items-center gap-1">
-                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Limpar
-                </button>
-            </div>
-
-            <div class="p-4 space-y-6 overflow-y-auto flex-1">
-                <!-- Filtro NTE -->
-                <div>
-                    <label for="selectNTE" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                        <i data-lucide="building-2" class="w-4 h-4 text-blue-500"></i>
-                        NTE (Coluna A)
-                    </label>
-                    <select id="selectNTE" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 outline-none transition-colors">
-                        <option value="">Todos os NTEs</option>
-                    </select>
-                </div>
-
-                <!-- Filtro Município -->
-                <div>
-                    <label for="selectMunicipio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i>
-                        Município (Coluna B)
-                    </label>
-                    <select id="selectMunicipio" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 outline-none transition-colors">
-                        <option value="">Todos os Municípios</option>
-                    </select>
-                </div>
-
-                <!-- Estatísticas -->
-                <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 space-y-2">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Registros Encontrados</div>
-                    <div id="recordsCount" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</div>
-                </div>
-
-                <!-- Dica visual -->
-                <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 space-y-1">
-                    <div class="font-semibold flex items-center gap-1">
-                        <i data-lucide="info" class="w-4 h-4"></i> Como Usar:
-                    </div>
-                    <p>• <strong>Congelamento:</strong> O cabeçalho e as colunas <em>NTE</em> e <em>Município</em> ficam fixos durante a rolagem.</p>
-                    <p>• <strong>Redimensionamento:</strong> Passe o mouse na borda direita do cabeçalho de qualquer coluna e arraste para mudar a largura.</p>
-                </div>
-            </div>
-
-            <!-- Sidebar Footer -->
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 text-xs text-center text-gray-500 dark:text-gray-400">
-                Aba: Cartão Manutenção
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
-
-            <!-- Search Bar -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
-                    </div>
-                    <input type="text" id="searchSEC" placeholder="Pesquisar por Código SEC (Coluna C)..." 
-                           class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
-                </div>
-            </div>
-
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Card 1: Limite Implantado -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between relative overflow-hidden">
-                    <div class="space-y-1 z-10">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Implantado</span>
-                        <div id="cardImplantado" class="text-2xl font-extrabold text-blue-600 dark:text-blue-400">R$ 0,00</div>
-                    </div>
-                    <div class="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400 z-10">
-                        <i data-lucide="wallet" class="w-8 h-8"></i>
-                    </div>
-                </div>
-
-                <!-- Card 2: Limite Disponível -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between relative overflow-hidden">
-                    <div class="space-y-1 z-10">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Disponível</span>
-                        <div id="cardDisponivel" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">R$ 0,00</div>
-                    </div>
-                    <div class="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-600 dark:text-emerald-400 z-10">
-                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
-                    </div>
-                </div>
-
-                <!-- Card 3: Despesas -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between relative overflow-hidden">
-                    <div class="space-y-1 z-10">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Despesas</span>
-                        <div id="cardDespesas" class="text-2xl font-extrabold text-amber-600 dark:text-amber-400">R$ 0,00</div>
-                    </div>
-                    <div class="p-3 bg-amber-100 dark:bg-amber-900/40 rounded-xl text-amber-600 dark:text-amber-400 z-10">
-                        <i data-lucide="trending-down" class="w-8 h-8"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Table Container Com Congelamento e Redimensionamento -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="table-container">
-                    <table id="dataTable" class="text-left text-sm">
-                        <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 uppercase text-xs tracking-wider border-b border-gray-200 dark:border-gray-700">
-                            <tr>
-                                <th class="px-4 py-3.5 sticky-col-1 bg-gray-100 dark:bg-gray-700" style="width: 110px;">NTE<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 sticky-col-2 bg-gray-100 dark:bg-gray-700" style="width: 160px;">Município<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5" style="width: 130px;">Código SEC<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5" style="width: 130px;">Código Inep<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5" style="width: 250px;">Und. Escolar<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5" style="width: 150px;">Cartão<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5" style="width: 200px;">Nome Portador<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 text-right" style="width: 160px;">Limite Implantado<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 text-right" style="width: 160px;">Limite Disponível<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 text-right" style="width: 140px;">Despesas<div class="resizer"></div></th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-300">
-                            <tr>
-                                <td colspan="10" class="text-center py-8 text-gray-400">
-                                    Carregando informações da planilha...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </main>
+<body>
+    <!-- Estrutura do Dashboard e Tabela -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th class="sticky-col-1">NTE <div class="resizer"></div></th>
+                    <th class="sticky-col-2">Município <div class="resizer"></div></th>
+                    <th>Código SEC <div class="resizer"></div></th>
+                    <!-- Demais colunas... -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Linhas dinâmicas preenchidas via JS -->
+            </tbody>
+        </table>
     </div>
 
-    <!-- Script de Funcionalidades do App -->
+    <!-- ========================================================= -->
+    <!-- 2. BLOCO JAVASCRIPT (LÓGICA DE ARRASTAR E RENDERIZAR)     -->
+    <!-- ========================================================= -->
     <script>
-        const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
-        const SHEET_NAME = 'Cartão Manutenção';
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&range=A3:K`;
-
-        let rawData = [];
-        let filteredData = [];
-
-        lucide.createIcons();
-
-        // Alternância de Tema Claro/Escuro
-        const themeToggleBtn = document.getElementById('themeToggle');
-        const themeIconSun = document.getElementById('themeIconSun');
-        const themeIconMoon = document.getElementById('themeIconMoon');
-        const themeText = document.getElementById('themeText');
-
-        function setTheme(isDark) {
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-                themeIconSun.classList.remove('hidden');
-                themeIconMoon.classList.add('hidden');
-                themeText.textContent = 'Claro';
-            } else {
-                document.documentElement.classList.remove('dark');
-                themeIconSun.classList.add('hidden');
-                themeIconMoon.classList.remove('hidden');
-                themeText.textContent = 'Escuro';
-            }
-        }
-
-        setTheme(true);
-
-        themeToggleBtn.addEventListener('click', () => {
-            const isDark = document.documentElement.classList.contains('dark');
-            setTheme(!isDark);
-        });
-
-        // Alternar Sidebar
-        document.getElementById('toggleSidebar').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('-ml-72');
-        });
-
-        // Atualiza dynamicamente a posição da 2ª coluna congelada
-        function updateStickyPositions() {
-            const col1 = document.querySelector('th.sticky-col-1');
-            if (col1) {
-                const col1Width = col1.offsetWidth;
-                const stickyCol2Elements = document.querySelectorAll('.sticky-col-2');
-                stickyCol2Elements.forEach(el => {
-                    el.style.left = col1Width + 'px';
-                });
-            }
-        }
-
-        // Lógica para Arrastar e Redimensionar Colunas Manualmente
+        // Lógica para permitir arrastar e redimensionar no CSS
         function initColumnResizing() {
-            const table = document.getElementById('dataTable');
-            const cols = table.querySelectorAll('th');
-
+            const cols = document.querySelectorAll('th');
             cols.forEach(col => {
                 const resizer = col.querySelector('.resizer');
                 if (!resizer) return;
 
-                let x = 0;
-                let w = 0;
+                resizer.addEventListener('mousedown', (e) => {
+                    let startX = e.clientX;
+                    let startWidth = col.offsetWidth;
 
-                const mouseDownHandler = function (e) {
-                    x = e.clientX;
-                    const styles = window.getComputedStyle(col);
-                    w = parseInt(styles.width, 10);
+                    const onMouseMove = (e) => {
+                        const newWidth = Math.max(60, startWidth + (e.clientX - startX));
+                        col.style.width = `${newWidth}px`;
+                        updateStickyPositions(); // Recalcula a posição sticky da 2ª coluna
+                    };
 
-                    resizer.classList.add('resizing');
+                    const onMouseUp = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
 
-                    document.addEventListener('mousemove', mouseMoveHandler);
-                    document.addEventListener('mouseup', mouseUpHandler);
-                };
-
-                const mouseMoveHandler = function (e) {
-                    const dx = e.clientX - x;
-                    const newWidth = Math.max(60, w + dx);
-                    col.style.width = `${newWidth}px`;
-                    
-                    updateStickyPositions();
-                };
-
-                const mouseUpHandler = function () {
-                    resizer.classList.remove('resizing');
-                    document.removeEventListener('mousemove', mouseMoveHandler);
-                    document.removeEventListener('mouseup', mouseUpHandler);
-                };
-
-                resizer.addEventListener('mousedown', mouseDownHandler);
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
             });
         }
-
-        function parseCurrency(value) {
-            if (!value) return 0;
-            if (typeof value === 'number') return value;
-            let cleanStr = value.toString().replace(/[^0-9,-]/g, '').replace(',', '.');
-            let parsed = parseFloat(cleanStr);
-            return isNaN(parsed) ? 0 : parsed;
-        }
-
-        function formatCurrency(num) {
-            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
-
-        function loadSheetData() {
-            const statusEl = document.getElementById('loadingStatus');
-            statusEl.classList.remove('hidden');
-
-            Papa.parse(CSV_URL, {
-                download: true,
-                header: false,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    statusEl.classList.add('hidden');
-                    const rows = results.data;
-                    if (!rows || rows.length === 0) {
-                        showEmptyTable("Nenhum dado encontrado na planilha.");
-                        return;
-                    }
-
-                    rawData = rows.map(row => ({
-                        nte: row[0] ? row[0].toString().trim() : '',
-                        municipio: row[1] ? row[1].toString().trim() : '',
-                        codigoSec: row[2] ? row[2].toString().trim() : '',
-                        codigoInep: row[3] ? row[3].toString().trim() : '',
-                        undEscolar: row[4] ? row[4].toString().trim() : '',
-                        cartao: row[5] ? row[5].toString().trim() : '',
-                        nomePortador: row[6] ? row[6].toString().trim() : '',
-                        limiteImplantado: parseCurrency(row[8]),
-                        limiteDisponivel: parseCurrency(row[9]),
-                        despesas: parseCurrency(row[10])
-                    })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
-
-                    populateDropdowns();
-                    applyFilters();
-                    initColumnResizing();
-                    updateStickyPositions();
-                },
-                error: function(err) {
-                    statusEl.classList.add('hidden');
-                    console.error("Erro ao carregar CSV:", err);
-                    showEmptyTable("Erro ao carregar dados da Google Sheet. Verifique as permissões.");
-                }
-            });
-        }
-
-        function populateDropdowns() {
-            const selectNTE = document.getElementById('selectNTE');
-            const selectMunicipio = document.getElementById('selectMunicipio');
-
-            const uniqueNTE = [...new Set(rawData.map(i => i.nte).filter(Boolean))].sort();
-            const uniqueMunicipio = [...new Set(rawData.map(i => i.municipio).filter(Boolean))].sort();
-
-            selectNTE.innerHTML = '<option value="">Todos os NTEs</option>';
-            uniqueNTE.forEach(nte => {
-                const opt = document.createElement('option');
-                opt.value = nte;
-                opt.textContent = nte;
-                selectNTE.appendChild(opt);
-            });
-
-            selectMunicipio.innerHTML = '<option value="">Todos os Municípios</option>';
-            uniqueMunicipio.forEach(mun => {
-                const opt = document.createElement('option');
-                opt.value = mun;
-                opt.textContent = mun;
-                selectMunicipio.appendChild(opt);
-            });
-        }
-
-        function applyFilters() {
-            const nteVal = document.getElementById('selectNTE').value;
-            const munVal = document.getElementById('selectMunicipio').value;
-            const secVal = document.getElementById('searchSEC').value.trim().toLowerCase();
-
-            filteredData = rawData.filter(item => {
-                const matchNTE = !nteVal || item.nte === nteVal;
-                const matchMun = !munVal || item.municipio === munVal;
-                const matchSEC = !secVal || item.codigoSec.toLowerCase().includes(secVal);
-                return matchNTE && matchMun && matchSEC;
-            });
-
-            updateCards();
-            renderTable();
-        }
-
-        function updateCards() {
-            let totalImplantado = 0;
-            let totalDisponivel = 0;
-            let totalDespesas = 0;
-
-            filteredData.forEach(item => {
-                totalImplantado += item.limiteImplantado;
-                totalDisponivel += item.limiteDisponivel;
-                totalDespesas += item.despesas;
-            });
-
-            document.getElementById('cardImplantado').textContent = formatCurrency(totalImplantado);
-            document.getElementById('cardDisponivel').textContent = formatCurrency(totalDisponivel);
-            document.getElementById('cardDespesas').textContent = formatCurrency(totalDespesas);
-            document.getElementById('recordsCount').textContent = filteredData.length;
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-
-            if (filteredData.length === 0) {
-                showEmptyTable("Nenhum resultado encontrado para os filtros aplicados.");
-                return;
-            }
-
-            filteredData.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 dark:hover:bg-gray-750/50 transition-colors";
-
-                tr.innerHTML = `
-                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white sticky-col-1 bg-white dark:bg-gray-800">${item.nte}</td>
-                    <td class="px-4 py-3 sticky-col-2 bg-white dark:bg-gray-800">${item.municipio}</td>
-                    <td class="px-4 py-3 font-mono text-xs">${item.codigoSec}</td>
-                    <td class="px-4 py-3 font-mono text-xs">${item.codigoInep}</td>
-                    <td class="px-4 py-3 font-medium">${item.undEscolar}</td>
-                    <td class="px-4 py-3 font-mono text-xs">${item.cartao}</td>
-                    <td class="px-4 py-3">${item.nomePortador}</td>
-                    <td class="px-4 py-3 text-right font-medium text-blue-600 dark:text-blue-400">${formatCurrency(item.limiteImplantado)}</td>
-                    <td class="px-4 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400">${formatCurrency(item.limiteDisponivel)}</td>
-                    <td class="px-4 py-3 text-right font-medium text-amber-600 dark:text-amber-400">${formatCurrency(item.despesas)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            updateStickyPositions();
-        }
-
-        function showEmptyTable(msg) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="text-center py-12 text-gray-400">
-                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
-                        <p>${msg}</p>
-                    </td>
-                </tr>
-            `;
-            lucide.createIcons();
-        }
-
-        document.getElementById('selectNTE').addEventListener('change', applyFilters);
-        document.getElementById('selectMunicipio').addEventListener('change', applyFilters);
-        document.getElementById('searchSEC').addEventListener('input', applyFilters);
-
-        document.getElementById('resetFilters').addEventListener('click', () => {
-            document.getElementById('selectNTE').value = '';
-            document.getElementById('selectMunicipio').value = '';
-            document.getElementById('searchSEC').value = '';
-            applyFilters();
-        });
-
-        loadSheetData();
     </script>
 </body>
 </html>
