@@ -69,24 +69,20 @@
             position: relative;
         }
 
-        /* ---------------------------------------------------------
-           1. FIXAÇÃO DO CABEÇALHO (Fundo Sólido Opaco para Não Misturar Texto)
-           --------------------------------------------------------- */
+        /* FIXAÇÃO DO CABEÇALHO (Fundo Sólido Opaco para não misturar os dados) */
         thead th {
             position: sticky;
             top: 0;
             z-index: 25;
-            background-color: #1f2937 !important; /* Opaco no tema escuro */
+            background-color: #1f2937 !important; /* Opaco no escuro */
             color: #f3f4f6;
         }
         html:not(.dark) thead th {
-            background-color: #f3f4f6 !important; /* Opaco no tema claro */
+            background-color: #f3f4f6 !important; /* Opaco no claro */
             color: #1f2937;
         }
 
-        /* ---------------------------------------------------------
-           2. CONGELAMENTO DAS COLUNAS FIXAS (NTE E MUNICÍPIO)
-           --------------------------------------------------------- */
+        /* CONGELAMENTO DAS COLUNAS FIXAS (NTE E MUNICÍPIO) */
         .sticky-col-1 {
             position: sticky;
             left: 0;
@@ -107,7 +103,7 @@
             background-color: #ffffff !important;
         }
 
-        /* Sobreposição do Topo com as Colunas Congeladas */
+        /* Intersecção Topo + Colunas Congeladas */
         thead th.sticky-col-1,
         thead th.sticky-col-2 {
             z-index: 35 !important;
@@ -130,16 +126,14 @@
             box-shadow: inset -10px 0 8px -8px rgba(0, 0, 0, 0.5);
         }
 
-        /* ---------------------------------------------------------
-           3. MARCAÇÃO EM AMARELO
-           --------------------------------------------------------- */
+        /* MARCAÇÃO EM AMARELO DA COLUNA CPF */
         .col-highlight {
             border-left: 2px solid #eab308 !important;
             border-right: 2px solid #eab308 !important;
             background-color: rgba(234, 179, 8, 0.08) !important;
         }
 
-        /* Redimensionamento das Colunas */
+        /* Redimensionamento */
         .resizer {
             position: absolute;
             right: 0;
@@ -243,36 +237,68 @@
                 <span class="text-gray-400 italic">Sincronização em tempo real</span>
             </div>
 
-            <!-- Gerenciador de Colunas (Botão para Ocultar/Reexibir e Marcações) -->
+            <!-- Gerenciador de Colunas (Lista Vertical) -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-3">
                 <div class="flex items-center justify-between">
                     <button id="toggleColMenu" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors">
                         <i data-lucide="columns" class="w-4 h-4 text-amber-500"></i>
-                        Ocultar / Exibir Colunas
+                        Ocultar / Reexibir Colunas
                         <i data-lucide="chevron-down" class="w-3 h-3"></i>
                     </button>
-                    <span class="text-xs text-gray-400">Destaque na coluna do CPF em <span class="text-amber-400 font-bold">Amarelo</span></span>
+                    <span class="text-xs text-gray-400">Destaque na coluna CPF em <span class="text-amber-400 font-bold">Amarelo</span></span>
                 </div>
 
-                <!-- Lista de Marcação com Checkboxes -->
-                <div id="colMenuContainer" class="hidden p-4 bg-gray-50 dark:bg-gray-750 rounded-lg border border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="0" checked class="col-vis-toggle"> NTE</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="1" checked class="col-vis-toggle"> Município</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="2" checked class="col-vis-toggle"> Código SEC</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="3" checked class="col-vis-toggle"> Código Inep</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="4" checked class="col-vis-toggle"> Und. Escolar</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="5" checked class="col-vis-toggle"> Cartão</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="6" checked class="col-vis-toggle"> Nome Portador</label>
-                    <label class="flex items-center gap-2 cursor-pointer font-bold text-amber-500"><input type="checkbox" data-col="7" checked class="col-vis-toggle"> CPF (Col H)</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="8" checked class="col-vis-toggle"> Limite Implantado</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="9" checked class="col-vis-toggle"> Limite Disponível</label>
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-col="10" checked class="col-vis-toggle"> Despesas</label>
+                <!-- Lista de Marcação em Formato de Lista Vertical -->
+                <div id="colMenuContainer" class="hidden p-4 bg-gray-50 dark:bg-gray-750 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col space-y-2 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="0" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>NTE (Coluna A)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="1" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Município (Coluna B)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="2" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Código SEC (Coluna C)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="3" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Código Inep (Coluna D)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="4" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Und. Escolar (Coluna E)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="5" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Cartão (Coluna F)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="6" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Nome Portador (Coluna G)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-amber-500/10 p-1.5 rounded transition-colors font-bold text-amber-500 border border-amber-500/20">
+                        <input type="checkbox" data-col="7" checked class="col-vis-toggle accent-amber-500"> 
+                        <span>CPF (Coluna H) - Destacado em Amarelo</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="8" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Limite Implantado (Coluna I)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="9" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Limite Disponível (Coluna J)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded transition-colors">
+                        <input type="checkbox" data-col="10" checked class="col-vis-toggle accent-blue-600"> 
+                        <span>Despesas (Coluna K)</span>
+                    </label>
                 </div>
             </div>
 
             <!-- Duas Caixas de Pesquisa (SEC e CPF) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Caixa de Pesquisa 1: Código SEC -->
                 <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <label class="block text-xs font-medium text-gray-400 mb-1">Pesquisar por Código SEC (Coluna C)</label>
                     <div class="relative">
@@ -281,7 +307,6 @@
                     </div>
                 </div>
 
-                <!-- Caixa de Pesquisa 2: CPF -->
                 <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <label class="block text-xs font-medium text-amber-400 mb-1">Pesquisar por CPF (Coluna H)</label>
                     <div class="relative">
@@ -291,9 +316,8 @@
                 </div>
             </div>
 
-            <!-- Cards -->
+            <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Card 1 -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div class="space-y-1">
                         <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Implantado</span>
@@ -304,7 +328,6 @@
                     </div>
                 </div>
 
-                <!-- Card 2 -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div class="space-y-1">
                         <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Disponível</span>
@@ -315,7 +338,6 @@
                     </div>
                 </div>
 
-                <!-- Card 3 -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div class="space-y-1">
                         <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Despesas</span>
@@ -327,7 +349,7 @@
                 </div>
             </div>
 
-            <!-- Tabela de Dados -->
+            <!-- Tabela -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="table-container">
                     <table id="dataTable" class="text-left text-sm">
@@ -371,12 +393,10 @@
 
         lucide.createIcons();
 
-        // Alternar Menu Retrátil de Colunas
         document.getElementById('toggleColMenu').addEventListener('click', () => {
             document.getElementById('colMenuContainer').classList.toggle('hidden');
         });
 
-        // Alternar Tema
         const themeToggleBtn = document.getElementById('themeToggle');
         const themeIconSun = document.getElementById('themeIconSun');
         const themeIconMoon = document.getElementById('themeIconMoon');
@@ -429,12 +449,10 @@
                     const rows = results.data;
                     if (!rows || rows.length === 0) return;
 
-                    // Data e Hora pegando da Célula A1
                     if (rows[0] && rows[0][0]) {
                         document.getElementById('sheetDateA1').textContent = rows[0][0];
                     }
 
-                    // Lê os dados pulando o título e o cabeçalho
                     const dataRows = rows.slice(2);
 
                     rawData = dataRows.map(row => ({
@@ -445,7 +463,7 @@
                         undEscolar: row[4] ? row[4].toString().trim() : '',
                         cartao: row[5] ? row[5].toString().trim() : '',
                         nomePortador: row[6] ? row[6].toString().trim() : '',
-                        cpf: row[7] ? row[7].toString().trim() : '', // CPF na Coluna H (Índice 7)
+                        cpf: row[7] ? row[7].toString().trim() : '',
                         limiteImplantado: parseCurrency(row[8]),
                         limiteDisponivel: parseCurrency(row[9]),
                         despesas: parseCurrency(row[10])
@@ -543,7 +561,6 @@
             applyColumnVisibility();
         }
 
-        // Aplica Ocultar e Exibir
         function applyColumnVisibility() {
             const checkboxes = document.querySelectorAll('.col-vis-toggle');
             checkboxes.forEach(cb => {
@@ -560,7 +577,6 @@
             cb.addEventListener('change', applyColumnVisibility);
         });
 
-        // Eventos dos Filtros
         document.getElementById('selectNTE').addEventListener('change', applyFilters);
         document.getElementById('selectMunicipio').addEventListener('change', applyFilters);
         document.getElementById('searchSEC').addEventListener('input', applyFilters);
