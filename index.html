@@ -15,7 +15,7 @@
                             50: '#eef4ff',
                             100: '#e0ebff',
                             200: '#c7d9fe',
-                            500: '#1851ba', // Tom principal do painel
+                            500: '#1851ba',
                             600: '#1343a0',
                             700: '#0e3380',
                             800: '#0a235c',
@@ -32,7 +32,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <style>
-        /* Personalização da Barra de Rolagem */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -48,7 +47,6 @@
             background: #1343a0;
         }
 
-        /* Estrutura da Tabela com Scroll Interno */
         .table-container {
             max-height: 60vh;
             overflow: auto;
@@ -69,7 +67,6 @@
             position: relative;
         }
 
-        /* Fixação do Cabeçalho */
         thead th {
             position: sticky;
             top: 0;
@@ -79,7 +76,6 @@
             font-weight: 700;
         }
 
-        /* Congelamento das duas primeiras colunas (NTE e Município) */
         .sticky-col-1 {
             position: sticky;
             left: 0;
@@ -94,14 +90,12 @@
             background-color: #ffffff !important;
         }
 
-        /* Intersecção Topo + Colunas Congeladas */
         thead th.sticky-col-1,
         thead th.sticky-col-2 {
             z-index: 35 !important;
             background-color: #1851ba !important;
         }
 
-        /* Sombra de separação nas colunas congeladas */
         .sticky-col-2::after {
             content: '';
             position: absolute;
@@ -113,14 +107,12 @@
             box-shadow: inset -10px 0 8px -8px rgba(10, 35, 92, 0.25);
         }
 
-        /* Destaque em Amarelo na Coluna CPF */
         .col-highlight {
             border-left: 2px solid #eab308 !important;
             border-right: 2px solid #eab308 !important;
             background-color: #fef9c3 !important;
         }
 
-        /* Ajustador de largura de colunas */
         .resizer {
             position: absolute;
             right: 0;
@@ -175,7 +167,6 @@
             </div>
 
             <div class="p-4 space-y-6 overflow-y-auto flex-1">
-                <!-- Filtro NTE -->
                 <div>
                     <label for="selectNTE" class="block text-sm font-semibold text-customBlue-900 mb-2 flex items-center gap-2">
                         <i data-lucide="building-2" class="w-4 h-4 text-customBlue-500"></i>
@@ -186,7 +177,6 @@
                     </select>
                 </div>
 
-                <!-- Filtro Município -->
                 <div>
                     <label for="selectMunicipio" class="block text-sm font-semibold text-customBlue-900 mb-2 flex items-center gap-2">
                         <i data-lucide="map-pin" class="w-4 h-4 text-customBlue-500"></i>
@@ -197,7 +187,6 @@
                     </select>
                 </div>
 
-                <!-- Contingente Encontrado -->
                 <div class="p-4 rounded-xl bg-customBlue-100/70 border border-customBlue-200 space-y-1">
                     <div class="text-xs text-customBlue-800 font-bold uppercase">Registros Encontrados</div>
                     <div id="recordsCount" class="text-3xl font-extrabold text-customBlue-900">0</div>
@@ -208,7 +197,7 @@
         <!-- Conteúdo Principal -->
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-            <!-- Data/Hora Célula A1 da Planilha -->
+            <!-- Data/Hora Célula A1 -->
             <div id="sheetUpdateBox" class="bg-customBlue-500 text-white p-3.5 rounded-xl flex items-center justify-between text-xs shadow-sm">
                 <div class="flex items-center gap-2">
                     <i data-lucide="clock" class="w-4 h-4 text-customBlue-200"></i>
@@ -228,51 +217,60 @@
                     <span class="text-xs text-customBlue-700">Destaque na coluna CPF em <span class="text-amber-600 font-bold">Amarelo</span></span>
                 </div>
 
-                <!-- Lista Vertical para Seleção das Colunas Visíveis -->
-                <div id="colMenuContainer" class="hidden p-3 bg-slate-900 rounded-lg border border-slate-700 flex flex-col space-y-1 text-xs text-slate-100">
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                <!-- Lista para Seleção das Colunas + Opção Master de Selecionar Tudo -->
+                <div id="colMenuContainer" class="hidden p-3 bg-slate-900 rounded-lg border border-slate-700 flex flex-col space-y-2 text-xs text-slate-100">
+                    
+                    <!-- Botão Master para Ocultar ou Reexibir Tudo -->
+                    <div class="pb-2 border-b border-slate-700 flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-amber-400">
+                            <input type="checkbox" id="selectAllCols" checked class="accent-amber-500 w-4 h-4">
+                            <span>Exibir / Ocultar Todas as Colunas</span>
+                        </label>
+                    </div>
+
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="0" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>NTE (Coluna A)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="1" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Município (Coluna B)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="2" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Código SEC (Coluna C)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="3" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Código Inep (Coluna D)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="4" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Und. Escolar (Coluna E)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="5" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Cartão (Coluna F)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="6" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Nome Portador (Coluna G)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer bg-amber-500/20 hover:bg-amber-500/30 p-2 rounded transition-colors font-bold text-amber-300 border border-amber-500/40">
+                    <label class="flex items-center gap-2 cursor-pointer bg-amber-500/20 hover:bg-amber-500/30 p-1.5 rounded transition-colors font-bold text-amber-300 border border-amber-500/40">
                         <input type="checkbox" data-col="7" checked class="col-vis-toggle accent-amber-500 w-4 h-4"> 
                         <span>CPF (Coluna H) - Destacado em Amarelo</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="8" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Limite Implantado (Coluna I)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="9" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
                         <span>Limite Disponível (Coluna J)</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
+                    <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="10" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
-                        <span>Despesas (Coluna K)</span>
+                        <span>Despesas (Coluna L)</span>
                     </label>
                 </div>
             </div>
@@ -296,7 +294,7 @@
                 </div>
             </div>
 
-            <!-- Cards com Valores Consolidados -->
+            <!-- Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-customBlue-200 flex items-center justify-between">
                     <div class="space-y-1">
@@ -345,7 +343,7 @@
                                 <th class="px-4 py-3.5 col-idx-7 text-amber-300 font-bold" style="width: 150px;">CPF (Col H)<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-8 text-right" style="width: 160px;">Limite Implantado<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-9 text-right" style="width: 160px;">Limite Disponível<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-10 text-right" style="width: 140px;">Despesas<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-10 text-right" style="width: 140px;">Despesas (Col L)<div class="resizer"></div></th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-customBlue-100 text-slate-700">
@@ -362,11 +360,12 @@
         </main>
     </div>
 
-    <!-- Lógica JavaScript de Leitura e Filtragem -->
+    <!-- Script de Processamento -->
     <script>
         const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
         const SHEET_NAME = 'Cartão Manutenção';
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:K`;
+        // Intervalo até a Coluna L
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:L`;
 
         let rawData = [];
         let filteredData = [];
@@ -406,13 +405,11 @@
                     const rows = results.data;
                     if (!rows || rows.length === 0) return;
 
-                    // Exibe a Data/Hora informada na Célula A1
                     if (rows[0] && rows[0][0]) {
                         document.getElementById('sheetDateA1').textContent = rows[0][0];
                     }
 
-                    // CORREÇÃO: .slice(2) descarta a Linha 1 (Data/Hora A1) e a Linha 2 (Cabeçalho com Município/Escola).
-                    // Lê estritamente os dados que iniciam na LINHA 3.
+                    // Descarta Linhas 1 e 2. Inicia leitura a partir da LINHA 3.
                     const dataRows = rows.slice(2);
 
                     rawData = dataRows.map(row => ({
@@ -424,9 +421,9 @@
                         cartao: row[5] ? row[5].toString().trim() : '',
                         nomePortador: row[6] ? row[6].toString().trim() : '',
                         cpf: row[7] ? row[7].toString().trim() : '',
-                        limiteImplantado: parseCurrency(row[8]),
-                        limiteDisponivel: parseCurrency(row[9]),
-                        despesas: parseCurrency(row[10])
+                        limiteImplantado: parseCurrency(row[8]), // Coluna I
+                        limiteDisponivel: parseCurrency(row[9]),  // Coluna J
+                        despesas: parseCurrency(row[11])           // Coluna L (Índice 11)
                     })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
 
                     populateDropdowns();
@@ -521,20 +518,17 @@
             applyColumnVisibility();
         }
 
-        // Aplicação do Esconder/Mostrar em tempo real
         function applyColumnVisibility() {
             const checkboxes = document.querySelectorAll('.col-vis-toggle');
             checkboxes.forEach(cb => {
                 const colIdx = cb.getAttribute('data-col');
                 const isChecked = cb.checked;
                 
-                // Trata o TH
                 const headerCell = document.querySelector(`th.col-idx-${colIdx}`);
                 if (headerCell) {
                     headerCell.style.display = isChecked ? '' : 'none';
                 }
 
-                // Trata todos os TDs correspondentes
                 const bodyCells = document.querySelectorAll(`td.col-idx-${colIdx}`);
                 bodyCells.forEach(cell => {
                     cell.style.display = isChecked ? '' : 'none';
@@ -542,9 +536,23 @@
             });
         }
 
-        // Event Listener para as marcações de Colunas
+        // Selecionar/Desmarcar tudo
+        document.getElementById('selectAllCols').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            document.querySelectorAll('.col-vis-toggle').forEach(cb => {
+                cb.checked = isChecked;
+            });
+            applyColumnVisibility();
+        });
+
         document.querySelectorAll('.col-vis-toggle').forEach(cb => {
-            cb.addEventListener('change', applyColumnVisibility);
+            cb.addEventListener('change', () => {
+                applyColumnVisibility();
+                
+                // Atualiza o estado do checkbox master caso algum individual seja desmarcado
+                const allChecked = Array.from(document.querySelectorAll('.col-vis-toggle')).every(c => c.checked);
+                document.getElementById('selectAllCols').checked = allChecked;
+            });
         });
 
         document.getElementById('selectNTE').addEventListener('change', applyFilters);
