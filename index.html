@@ -15,7 +15,7 @@
                             50: '#eef4ff',
                             100: '#e0ebff',
                             200: '#c7d9fe',
-                            500: '#1851ba', // Cor principal solicitada
+                            500: '#1851ba', // Tom principal do painel
                             600: '#1343a0',
                             700: '#0e3380',
                             800: '#0a235c',
@@ -28,7 +28,7 @@
     </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- PapaParse para ler CSV -->
+    <!-- PapaParse para conversão do Google Sheets em JSON -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <style>
@@ -48,7 +48,7 @@
             background: #1343a0;
         }
 
-        /* Container da Tabela com Rolagem Interna */
+        /* Estrutura da Tabela com Scroll Interno */
         .table-container {
             max-height: 60vh;
             overflow: auto;
@@ -69,7 +69,7 @@
             position: relative;
         }
 
-        /* FIXAÇÃO DO CABEÇALHO DA TABELA */
+        /* Fixação do Cabeçalho */
         thead th {
             position: sticky;
             top: 0;
@@ -79,7 +79,7 @@
             font-weight: 700;
         }
 
-        /* CONGELAMENTO DAS COLUNAS FIXAS (NTE E MUNICÍPIO) */
+        /* Congelamento das duas primeiras colunas (NTE e Município) */
         .sticky-col-1 {
             position: sticky;
             left: 0;
@@ -101,7 +101,7 @@
             background-color: #1851ba !important;
         }
 
-        /* Sombra na Borda das Colunas Fixas */
+        /* Sombra de separação nas colunas congeladas */
         .sticky-col-2::after {
             content: '';
             position: absolute;
@@ -113,14 +113,14 @@
             box-shadow: inset -10px 0 8px -8px rgba(10, 35, 92, 0.25);
         }
 
-        /* MARCAÇÃO EM AMARELO DA COLUNA CPF */
+        /* Destaque em Amarelo na Coluna CPF */
         .col-highlight {
             border-left: 2px solid #eab308 !important;
             border-right: 2px solid #eab308 !important;
             background-color: #fef9c3 !important;
         }
 
-        /* Redimensionamento */
+        /* Ajustador de largura de colunas */
         .resizer {
             position: absolute;
             right: 0;
@@ -140,7 +140,7 @@
 </head>
 <body class="bg-customBlue-50 text-slate-800 min-h-screen flex flex-col font-sans">
 
-    <!-- Header Navigation -->
+    <!-- Navbar Topo -->
     <header class="bg-customBlue-500 text-white h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-50 shadow-md">
         <div class="flex items-center gap-3">
             <button id="toggleSidebar" class="p-2 rounded-lg text-white hover:bg-customBlue-600 focus:outline-none transition-colors">
@@ -165,7 +165,7 @@
     </header>
 
     <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar -->
+        <!-- Sidebar Filtros -->
         <aside id="sidebar" class="w-72 bg-white border-r border-customBlue-200 flex flex-col transition-all duration-300 z-30 shadow-sm">
             <div class="p-4 border-b border-customBlue-100 flex items-center justify-between bg-customBlue-50">
                 <span class="text-xs font-bold uppercase tracking-wider text-customBlue-700">Filtros de Validação</span>
@@ -181,7 +181,7 @@
                         <i data-lucide="building-2" class="w-4 h-4 text-customBlue-500"></i>
                         NTE (Coluna A)
                     </label>
-                    <select id="selectNTE" class="w-full bg-customBlue-50 border border-customBlue-200 text-customBlue-900 text-sm rounded-lg focus:ring-2 focus:ring-customBlue-500 focus:border-customBlue-500 p-2.5 outline-none transition-all">
+                    <select id="selectNTE" class="w-full bg-customBlue-50 border border-customBlue-200 text-customBlue-900 text-sm rounded-lg focus:ring-2 focus:ring-customBlue-500 p-2.5 outline-none transition-all">
                         <option value="">Todos os NTEs</option>
                     </select>
                 </div>
@@ -192,12 +192,12 @@
                         <i data-lucide="map-pin" class="w-4 h-4 text-customBlue-500"></i>
                         Município (Coluna B)
                     </label>
-                    <select id="selectMunicipio" class="w-full bg-customBlue-50 border border-customBlue-200 text-customBlue-900 text-sm rounded-lg focus:ring-2 focus:ring-customBlue-500 focus:border-customBlue-500 p-2.5 outline-none transition-all">
+                    <select id="selectMunicipio" class="w-full bg-customBlue-50 border border-customBlue-200 text-customBlue-900 text-sm rounded-lg focus:ring-2 focus:ring-customBlue-500 p-2.5 outline-none transition-all">
                         <option value="">Todos os Municípios</option>
                     </select>
                 </div>
 
-                <!-- Estatísticas -->
+                <!-- Contingente Encontrado -->
                 <div class="p-4 rounded-xl bg-customBlue-100/70 border border-customBlue-200 space-y-1">
                     <div class="text-xs text-customBlue-800 font-bold uppercase">Registros Encontrados</div>
                     <div id="recordsCount" class="text-3xl font-extrabold text-customBlue-900">0</div>
@@ -205,10 +205,10 @@
             </div>
         </aside>
 
-        <!-- Main Content Area -->
+        <!-- Conteúdo Principal -->
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-            <!-- Data / Hora extraída da Célula A1 -->
+            <!-- Data/Hora Célula A1 da Planilha -->
             <div id="sheetUpdateBox" class="bg-customBlue-500 text-white p-3.5 rounded-xl flex items-center justify-between text-xs shadow-sm">
                 <div class="flex items-center gap-2">
                     <i data-lucide="clock" class="w-4 h-4 text-customBlue-200"></i>
@@ -217,7 +217,7 @@
                 <span class="text-customBlue-200 font-medium italic">Sincronização em tempo real</span>
             </div>
 
-            <!-- Gerenciador de Colunas (Lista Vertical Escura e Bem Visível) -->
+            <!-- Gerenciador de Exibição de Colunas -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-customBlue-200 space-y-3">
                 <div class="flex items-center justify-between">
                     <button id="toggleColMenu" class="px-4 py-2 bg-customBlue-500 hover:bg-customBlue-600 text-white rounded-lg text-xs font-bold flex items-center gap-2 transition-colors">
@@ -228,7 +228,7 @@
                     <span class="text-xs text-customBlue-700">Destaque na coluna CPF em <span class="text-amber-600 font-bold">Amarelo</span></span>
                 </div>
 
-                <!-- Lista Vertical com Contraste Alto -->
+                <!-- Lista Vertical para Seleção das Colunas Visíveis -->
                 <div id="colMenuContainer" class="hidden p-3 bg-slate-900 rounded-lg border border-slate-700 flex flex-col space-y-1 text-xs text-slate-100">
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors font-medium">
                         <input type="checkbox" data-col="0" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
@@ -277,7 +277,7 @@
                 </div>
             </div>
 
-            <!-- Caixas de Pesquisa -->
+            <!-- Pesquisas Diretas -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white p-3.5 rounded-xl shadow-sm border border-customBlue-200">
                     <label class="block text-xs font-semibold text-customBlue-800 mb-1">Pesquisar por Código SEC (Coluna C)</label>
@@ -296,7 +296,7 @@
                 </div>
             </div>
 
-            <!-- Summary Cards -->
+            <!-- Cards com Valores Consolidados -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-customBlue-200 flex items-center justify-between">
                     <div class="space-y-1">
@@ -329,7 +329,7 @@
                 </div>
             </div>
 
-            <!-- Tabela -->
+            <!-- Tabela de Dados -->
             <div class="bg-white rounded-xl shadow-sm border border-customBlue-200 overflow-hidden">
                 <div class="table-container">
                     <table id="dataTable" class="text-left text-sm">
@@ -362,7 +362,7 @@
         </main>
     </div>
 
-    <!-- Script JavaScript -->
+    <!-- Lógica JavaScript de Leitura e Filtragem -->
     <script>
         const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
         const SHEET_NAME = 'Cartão Manutenção';
@@ -394,51 +394,46 @@
         }
 
         function loadSheetData() {
-    const statusEl = document.getElementById('loadingStatus');
-    statusEl.classList.remove('hidden');
+            const statusEl = document.getElementById('loadingStatus');
+            statusEl.classList.remove('hidden');
 
-    Papa.parse(CSV_URL, {
-        download: true,
-        header: false,
-        skipEmptyLines: true,
-        complete: function(results) {
-            statusEl.classList.add('hidden');
-            const rows = results.data;
-            if (!rows || rows.length === 0) return;
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    statusEl.classList.add('hidden');
+                    const rows = results.data;
+                    if (!rows || rows.length === 0) return;
 
-            // Pega a Data/Hora da Célula A1 (Linha 1)
-            if (rows[0] && rows[0][0]) {
-                document.getElementById('sheetDateA1').textContent = rows[0][0];
-            }
+                    // Exibe a Data/Hora informada na Célula A1
+                    if (rows[0] && rows[0][0]) {
+                        document.getElementById('sheetDateA1').textContent = rows[0][0];
+                    }
 
-            // CORREÇÃO: .slice(1) ignora apenas a linha A1.
-            // A linha 2 vira índice 0, e a LINHA 3 vira o índice 1 dos dados.
-            const dataRows = rows.slice(1);
+                    // CORREÇÃO: .slice(2) descarta a Linha 1 (Data/Hora A1) e a Linha 2 (Cabeçalho com Município/Escola).
+                    // Lê estritamente os dados que iniciam na LINHA 3.
+                    const dataRows = rows.slice(2);
 
-            rawData = dataRows.map(row => ({
-                nte: row[0] ? row[0].toString().trim() : '',
-                municipio: row[1] ? row[1].toString().trim() : '',
-                codigoSec: row[2] ? row[2].toString().trim() : '',
-                codigoInep: row[3] ? row[3].toString().trim() : '',
-                undEscolar: row[4] ? row[4].toString().trim() : '',
-                cartao: row[5] ? row[5].toString().trim() : '',
-                nomePortador: row[6] ? row[6].toString().trim() : '',
-                cpf: row[7] ? row[7].toString().trim() : '',
-                limiteImplantado: parseCurrency(row[8]),
-                limiteDisponivel: parseCurrency(row[9]),
-                despesas: parseCurrency(row[10])
-            })).filter(item => {
-                // Filtro para ignorar caso a linha seja o próprio cabeçalho "NTE" ou esteja vazia
-                const isHeader = item.nte.toUpperCase() === 'NTE' || item.codigoSec.toUpperCase().includes('CÓDIGO');
-                const hasData = item.nte !== '' || item.municipio !== '' || item.codigoSec !== '';
-                return !isHeader && hasData;
+                    rawData = dataRows.map(row => ({
+                        nte: row[0] ? row[0].toString().trim() : '',
+                        municipio: row[1] ? row[1].toString().trim() : '',
+                        codigoSec: row[2] ? row[2].toString().trim() : '',
+                        codigoInep: row[3] ? row[3].toString().trim() : '',
+                        undEscolar: row[4] ? row[4].toString().trim() : '',
+                        cartao: row[5] ? row[5].toString().trim() : '',
+                        nomePortador: row[6] ? row[6].toString().trim() : '',
+                        cpf: row[7] ? row[7].toString().trim() : '',
+                        limiteImplantado: parseCurrency(row[8]),
+                        limiteDisponivel: parseCurrency(row[9]),
+                        despesas: parseCurrency(row[10])
+                    })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
+
+                    populateDropdowns();
+                    applyFilters();
+                }
             });
-
-            populateDropdowns();
-            applyFilters();
         }
-    });
-}
 
         function populateDropdowns() {
             const selectNTE = document.getElementById('selectNTE');
@@ -526,18 +521,28 @@
             applyColumnVisibility();
         }
 
+        // Aplicação do Esconder/Mostrar em tempo real
         function applyColumnVisibility() {
             const checkboxes = document.querySelectorAll('.col-vis-toggle');
             checkboxes.forEach(cb => {
                 const colIdx = cb.getAttribute('data-col');
                 const isChecked = cb.checked;
-                const cells = document.querySelectorAll(`.col-idx-${colIdx}`);
-                cells.forEach(cell => {
+                
+                // Trata o TH
+                const headerCell = document.querySelector(`th.col-idx-${colIdx}`);
+                if (headerCell) {
+                    headerCell.style.display = isChecked ? '' : 'none';
+                }
+
+                // Trata todos os TDs correspondentes
+                const bodyCells = document.querySelectorAll(`td.col-idx-${colIdx}`);
+                bodyCells.forEach(cell => {
                     cell.style.display = isChecked ? '' : 'none';
                 });
             });
         }
 
+        // Event Listener para as marcações de Colunas
         document.querySelectorAll('.col-vis-toggle').forEach(cb => {
             cb.addEventListener('change', applyColumnVisibility);
         });
