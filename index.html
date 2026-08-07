@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel - Cartão Manutenção</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0c3a54',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PapaParse para parsing de CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+    <!-- Cabeçalho -->
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <button id="toggleSidebar" class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 text-white p-2 rounded-lg">
+                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                    Painel Cartão Manutenção
+                </h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div id="loadingStatus" class="hidden flex items-center gap-2 text-xs text-blue-500 font-medium">
+                <i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>
+                <span>Carregando dados...</span>
+            </div>
+
+            <!-- Botão do Tema -->
+            <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 text-sm font-medium">
+                <i id="themeIconSun" data-lucide="sun" class="w-5 h-5 text-yellow-400 hidden"></i>
+                <i id="themeIconMoon" data-lucide="moon" class="w-5 h-5 text-indigo-400"></i>
+                <span id="themeText" class="hidden sm:inline">Escuro</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Menu Lateral (Sidebar) -->
+        <aside id="sidebar" class="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 z-20">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Filtros de Validação</span>
+                <button id="resetFilters" class="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Limpar
+                </button>
+            </div>
+
+            <div class="p-4 space-y-6 overflow-y-auto flex-1">
+                <!-- Dropdown NTE -->
+                <div>
+                    <label for="selectNTE" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4 text-blue-500"></i>
+                        NTE (Coluna A)
+                    </label>
+                    <select id="selectNTE" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 outline-none transition-colors">
+                        <option value="">Todos os NTEs</option>
+                    </select>
+                </div>
+
+                <!-- Dropdown Município -->
+                <div>
+                    <label for="selectMunicipio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i>
+                        Município (Coluna B)
+                    </label>
+                    <select id="selectMunicipio" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 outline-none transition-colors">
+                        <option value="">Todos os Municípios</option>
+                    </select>
+                </div>
+
+                <!-- Estatísticas de Registros -->
+                <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 space-y-2">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Registros Encontrados</div>
+                    <div id="recordsCount" class="text-2xl font-bold text-gray-800 dark:text-gray-100">0</div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 text-xs text-center text-gray-500 dark:text-gray-400">
+                Aba: Cartão Manutenção
+            </div>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+            <!-- Caixa de Pesquisa -->
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="text" id="searchSEC" placeholder="Pesquisar por Código SEC (Coluna C)..." 
+                           class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                </div>
+            </div>
+
+            <!-- Cards de Resumo Financeiro -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card Limite Implantado -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between relative overflow-hidden">
+                    <div class="space-y-1 z-10">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Implantado</span>
+                        <div id="cardImplantado" class="text-2xl font-extrabold text-blue-600 dark:text-blue-400">R$ 0,00</div>
+                    </div>
+                    <div class="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400 z-10">
+                        <i data-lucide="wallet" class="w-8 h-8"></i>
+                    </div>
+                </div>
+
+                <!-- Card Limite Disponível -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between relative overflow-hidden">
+                    <div class="space-y-1 z-10">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Limite Disponível</span>
+                        <div id="cardDisponivel" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">R$ 0,00</div>
+                    </div>
+                    <div class="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-600 dark:text-emerald-400 z-10">
+                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                    </div>
+                </div>
+
+                <!-- Card Despesas -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between relative overflow-hidden">
+                    <div class="space-y-1 z-10">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Despesas</span>
+                        <div id="cardDespesas" class="text-2xl font-extrabold text-amber-600 dark:text-amber-400">R$ 0,00</div>
+                    </div>
+                    <div class="p-3 bg-amber-100 dark:bg-amber-900/40 rounded-xl text-amber-600 dark:text-amber-400 z-10">
+                        <i data-lucide="trending-down" class="w-8 h-8"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Dados -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 uppercase text-xs tracking-wider border-b border-gray-200 dark:border-gray-700">
+                            <tr>
+                                <th class="px-4 py-3.5">NTE</th>
+                                <th class="px-4 py-3.5">Município</th>
+                                <th class="px-4 py-3.5">Código SEC</th>
+                                <th class="px-4 py-3.5">Código Inep</th>
+                                <th class="px-4 py-3.5">Und. Escolar</th>
+                                <th class="px-4 py-3.5">Cartão</th>
+                                <th class="px-4 py-3.5">Nome Portador</th>
+                                <th class="px-4 py-3.5 text-right">Limite Implantado</th>
+                                <th class="px-4 py-3.5 text-right">Limite Disponível</th>
+                                <th class="px-4 py-3.5 text-right">Despesas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-300">
+                            <tr>
+                                <td colspan="10" class="text-center py-8 text-gray-400">
+                                    Carregando informações da planilha...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script JavaScript -->
+    <script>
+        const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
+        const SHEET_NAME = 'Cartão Manutenção';
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&range=A3:K`;
+
+        let rawData = [];
+        let filteredData = [];
+
+        lucide.createIcons();
+
+        // Controle do Tema Escuro/Claro
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIconSun = document.getElementById('themeIconSun');
+        const themeIconMoon = document.getElementById('themeIconMoon');
+        const themeText = document.getElementById('themeText');
+
+        function setTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                themeIconSun.classList.remove('hidden');
+                themeIconMoon.classList.add('hidden');
+                themeText.textContent = 'Claro';
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeIconSun.classList.add('hidden');
+                themeIconMoon.classList.remove('hidden');
+                themeText.textContent = 'Escuro';
+            }
+        }
+
+        // Define Tema Escuro por padrão
+        setTheme(true);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            setTheme(!isDark);
+        });
+
+        // Alternar Menu Lateral
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-ml-72');
+        });
+
+        // Converte string/moeda para número de ponto flutuante
+        function parseCurrency(value) {
+            if (!value) return 0;
+            if (typeof value === 'number') return value;
+            let cleanStr = value.toString().replace(/[^0-9,-]/g, '').replace(',', '.');
+            let parsed = parseFloat(cleanStr);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function formatCurrency(num) {
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // Carrega dados via CSV público da Google Sheet
+        function loadSheetData() {
+            const statusEl = document.getElementById('loadingStatus');
+            statusEl.classList.remove('hidden');
+
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    statusEl.classList.add('hidden');
+                    const rows = results.data;
+                    
+                    if (!rows || rows.length === 0) {
+                        showEmptyTable("Nenhum dado encontrado.");
+                        return;
+                    }
+
+                    rawData = rows.map(row => ({
+                        nte: row[0] ? row[0].toString().trim() : '',
+                        municipio: row[1] ? row[1].toString().trim() : '',
+                        codigoSec: row[2] ? row[2].toString().trim() : '',
+                        codigoInep: row[3] ? row[3].toString().trim() : '',
+                        undEscolar: row[4] ? row[4].toString().trim() : '',
+                        cartao: row[5] ? row[5].toString().trim() : '',
+                        nomePortador: row[6] ? row[6].toString().trim() : '',
+                        limiteImplantado: parseCurrency(row[8]), // Coluna I
+                        limiteDisponivel: parseCurrency(row[9]), // Coluna J
+                        despesas: parseCurrency(row[10])          // Coluna K
+                    })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
+
+                    populateDropdowns();
+                    applyFilters();
+                },
+                error: function(err) {
+                    statusEl.classList.add('hidden');
+                    showEmptyTable("Erro ao carregar dados da Google Sheet. Certifique-se de que a planilha está pública.");
+                }
+            });
+        }
+
+        // Preenche dropdowns com dados ÚNICOS (sem repetições)
+        function populateDropdowns() {
+            const selectNTE = document.getElementById('selectNTE');
+            const selectMunicipio = document.getElementById('selectMunicipio');
+
+            const uniqueNTE = [...new Set(rawData.map(i => i.nte).filter(Boolean))].sort();
+            const uniqueMunicipio = [...new Set(rawData.map(i => i.municipio).filter(Boolean))].sort();
+
+            selectNTE.innerHTML = '<option value="">Todos os NTEs</option>';
+            uniqueNTE.forEach(nte => {
+                const opt = document.createElement('option');
+                opt.value = nte;
+                opt.textContent = nte;
+                selectNTE.appendChild(opt);
+            });
+
+            selectMunicipio.innerHTML = '<option value="">Todos os Municípios</option>';
+            uniqueMunicipio.forEach(mun => {
+                const opt = document.createElement('option');
+                opt.value = mun;
+                opt.textContent = mun;
+                selectMunicipio.appendChild(opt);
+            });
+        }
+
+        // Aplicação dos Filtros
+        function applyFilters() {
+            const nteVal = document.getElementById('selectNTE').value;
+            const munVal = document.getElementById('selectMunicipio').value;
+            const secVal = document.getElementById('searchSEC').value.trim().toLowerCase();
+
+            filteredData = rawData.filter(item => {
+                const matchNTE = !nteVal || item.nte === nteVal;
+                const matchMun = !munVal || item.municipio === munVal;
+                const matchSEC = !secVal || item.codigoSec.toLowerCase().includes(secVal);
+                return matchNTE && matchMun && matchSEC;
+            });
+
+            updateCards();
+            renderTable();
+        }
+
+        function updateCards() {
+            let totalImplantado = 0;
+            let totalDisponivel = 0;
+            let totalDespesas = 0;
+
+            filteredData.forEach(item => {
+                totalImplantado += item.limiteImplantado;
+                totalDisponivel += item.limiteDisponivel;
+                totalDespesas += item.despesas;
+            });
+
+            document.getElementById('cardImplantado').textContent = formatCurrency(totalImplantado);
+            document.getElementById('cardDisponivel').textContent = formatCurrency(totalDisponivel);
+            document.getElementById('cardDespesas').textContent = formatCurrency(totalDespesas);
+            document.getElementById('recordsCount').textContent = filteredData.length;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                showEmptyTable("Nenhum resultado encontrado para os filtros aplicados.");
+                return;
+            }
+
+            filteredData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 dark:hover:bg-gray-750/50 transition-colors";
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">${item.nte}</td>
+                    <td class="px-4 py-3">${item.municipio}</td>
+                    <td class="px-4 py-3 font-mono text-xs bg-gray-100 dark:bg-gray-700/50 px-2 py-1 rounded w-max">${item.codigoSec}</td>
+                    <td class="px-4 py-3 font-mono text-xs">${item.codigoInep}</td>
+                    <td class="px-4 py-3 font-medium">${item.undEscolar}</td>
+                    <td class="px-4 py-3 font-mono text-xs">${item.cartao}</td>
+                    <td class="px-4 py-3">${item.nomePortador}</td>
+                    <td class="px-4 py-3 text-right font-medium text-blue-600 dark:text-blue-400">${formatCurrency(item.limiteImplantado)}</td>
+                    <td class="px-4 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400">${formatCurrency(item.limiteDisponivel)}</td>
+                    <td class="px-4 py-3 text-right font-medium text-amber-600 dark:text-amber-400">${formatCurrency(item.despesas)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showEmptyTable(msg) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center py-12 text-gray-400">
+                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+                        <p>${msg}</p>
+                    </td>
+                </tr>
+            `;
+            lucide.createIcons();
+        }
+
+        document.getElementById('selectNTE').addEventListener('change', applyFilters);
+        document.getElementById('selectMunicipio').addEventListener('change', applyFilters);
+        document.getElementById('searchSEC').addEventListener('input', applyFilters);
+
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            document.getElementById('selectNTE').value = '';
+            document.getElementById('selectMunicipio').value = '';
+            document.getElementById('searchSEC').value = '';
+            applyFilters();
+        });
+
+        loadSheetData();
+    </script>
+</body>
+</html>
