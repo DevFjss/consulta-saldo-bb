@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Cartões e Recursos</title>
+    <title>Painel Gestão de Recursos</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -32,7 +32,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <style>
-        /* Variáveis de Cores Padrão (Manutenção - Azul) */
+        /* Tema Padrão (Cartão Manutenção - Azul) */
         :root {
             --color-50: #eef4ff;
             --color-100: #e0ebff;
@@ -44,7 +44,7 @@
             --color-900: #071842;
         }
 
-        /* Tema PNAE - Amarelo */
+        /* Tema Cartao Pnae - Amarelo */
         body.theme-pnae {
             --color-50: #fefce8;
             --color-100: #fef9c3;
@@ -56,16 +56,16 @@
             --color-900: #422006;
         }
 
-        /* Tema FAED - Verde */
+        /* Tema Cartao Faed - Cinza/Grafite */
         body.theme-faed {
-            --color-50: #f0fdf4;
-            --color-100: #dcfce7;
-            --color-200: #bbf7d0;
-            --color-500: #16a34a;
-            --color-600: #15803d;
-            --color-700: #15652c;
-            --color-800: #164e28;
-            --color-900: #052e16;
+            --color-50: #f8fafc;
+            --color-100: #f1f5f9;
+            --color-200: #e2e8f0;
+            --color-500: #475569;
+            --color-600: #334155;
+            --color-700: #1e293b;
+            --color-800: #0f172a;
+            --color-900: #020617;
         }
 
         ::-webkit-scrollbar {
@@ -171,15 +171,15 @@
         <div class="flex items-center bg-black/10 p-1 rounded-xl gap-1 mb-2 sm:mb-0">
             <button data-sheet="Cartão Manutenção" data-theme="" class="tab-btn active px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2">
                 <i data-lucide="wrench" class="w-4 h-4"></i>
-                Base Manutenção
+                Cartão Manutenção
             </button>
-            <button data-sheet="Base Pnae" data-theme="theme-pnae" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-white/80 hover:text-white">
+            <button data-sheet="Cartao Pnae" data-theme="theme-pnae" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-white/80 hover:text-white">
                 <i data-lucide="utensils" class="w-4 h-4"></i>
-                Base PNAE
+                Cartão PNAE
             </button>
-            <button data-sheet="Base Faed" data-theme="theme-faed" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-white/80 hover:text-white">
+            <button data-sheet="Cartao Faed" data-theme="theme-faed" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-white/80 hover:text-white">
                 <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-                Base FAED
+                Cartão FAED
             </button>
         </div>
 
