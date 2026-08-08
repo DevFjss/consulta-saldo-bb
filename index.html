@@ -246,20 +246,31 @@
             </div>
 
             <!-- Pesquisas Diretas -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-3.5 rounded-xl shadow-sm border border-customBlue-200">
-                    <label class="block text-xs font-semibold text-customBlue-800 mb-1">Pesquisar por Código SEC (Coluna C)</label>
-                    <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 text-customBlue-500 absolute left-3 top-3"></i>
-                        <input type="text" id="searchSEC" placeholder="Digite o Código SEC..." class="w-full pl-9 pr-4 py-2 bg-customBlue-50 border border-customBlue-200 rounded-lg text-sm text-customBlue-900 outline-none focus:ring-2 focus:ring-customBlue-500">
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-customBlue-200">
+                        <label class="block text-xs font-semibold text-customBlue-800 mb-1">Pesquisar por Código SEC (Coluna C)</label>
+                        <div class="relative">
+                            <i data-lucide="search" class="w-4 h-4 text-customBlue-500 absolute left-3 top-3"></i>
+                            <input type="text" id="searchSEC" placeholder="Digite o Código SEC..." class="w-full pl-9 pr-4 py-2 bg-customBlue-50 border border-customBlue-200 rounded-lg text-sm text-customBlue-900 outline-none focus:ring-2 focus:ring-customBlue-500">
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-customBlue-200">
+                        <label class="block text-xs font-semibold text-amber-800 mb-1">Pesquisar por CPF (Coluna H)</label>
+                        <div class="relative">
+                            <i data-lucide="user-check" class="w-4 h-4 text-amber-500 absolute left-3 top-3"></i>
+                            <input type="text" id="searchCPF" placeholder="Digite o CPF..." class="w-full pl-9 pr-4 py-2 bg-amber-50/50 border border-amber-300 rounded-lg text-sm text-amber-900 outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
                     </div>
                 </div>
 
+                <!-- Nova Pesquisa por Nome do Portador (Coluna G) -->
                 <div class="bg-white p-3.5 rounded-xl shadow-sm border border-customBlue-200">
-                    <label class="block text-xs font-semibold text-amber-800 mb-1">Pesquisar por CPF (Coluna H)</label>
+                    <label class="block text-xs font-semibold text-customBlue-800 mb-1">Pesquisar por Nome do Portador (Coluna G)</label>
                     <div class="relative">
-                        <i data-lucide="user-check" class="w-4 h-4 text-amber-500 absolute left-3 top-3"></i>
-                        <input type="text" id="searchCPF" placeholder="Digite o CPF..." class="w-full pl-9 pr-4 py-2 bg-amber-50/50 border border-amber-300 rounded-lg text-sm text-amber-900 outline-none focus:ring-2 focus:ring-amber-500">
+                        <i data-lucide="user" class="w-4 h-4 text-customBlue-500 absolute left-3 top-3"></i>
+                        <input type="text" id="searchNomePortador" placeholder="Digite o nome do portador..." class="w-full pl-9 pr-4 py-2 bg-customBlue-50 border border-customBlue-200 rounded-lg text-sm text-customBlue-900 outline-none focus:ring-2 focus:ring-customBlue-500">
                     </div>
                 </div>
             </div>
@@ -440,7 +451,6 @@
                 selectMunicipio.appendChild(opt);
             });
 
-            // Mantém o município selecionado anteriormente caso ele exista no novo NTE
             if (uniqueMunicipio.includes(currentSelectedMun)) {
                 selectMunicipio.value = currentSelectedMun;
             } else {
@@ -453,13 +463,15 @@
             const munVal = document.getElementById('selectMunicipio').value;
             const secVal = document.getElementById('searchSEC').value.trim().toLowerCase();
             const cpfVal = document.getElementById('searchCPF').value.trim().toLowerCase();
+            const portadorVal = document.getElementById('searchNomePortador').value.trim().toLowerCase();
 
             filteredData = rawData.filter(item => {
                 const matchNTE = !nteVal || item.nte === nteVal;
                 const matchMun = !munVal || item.municipio === munVal;
                 const matchSEC = !secVal || item.codigoSec.toLowerCase().includes(secVal);
                 const matchCPF = !cpfVal || item.cpf.toLowerCase().includes(cpfVal);
-                return matchNTE && matchMun && matchSEC && matchCPF;
+                const matchPortador = !portadorVal || item.nomePortador.toLowerCase().includes(portadorVal);
+                return matchNTE && matchMun && matchSEC && matchCPF && matchPortador;
             });
 
             updateCards();
@@ -581,7 +593,6 @@
             });
         });
 
-        // Evento de alteração no seletor do NTE para atualizar o seletor de Município dinamicamente
         document.getElementById('selectNTE').addEventListener('change', (e) => {
             const selectedNTE = e.target.value;
             populateMunicipioDropdown(selectedNTE);
@@ -591,6 +602,7 @@
         document.getElementById('selectMunicipio').addEventListener('change', applyFilters);
         document.getElementById('searchSEC').addEventListener('input', applyFilters);
         document.getElementById('searchCPF').addEventListener('input', applyFilters);
+        document.getElementById('searchNomePortador').addEventListener('input', applyFilters);
 
         document.getElementById('resetFilters').addEventListener('click', () => {
             document.getElementById('selectNTE').value = '';
@@ -598,6 +610,7 @@
             document.getElementById('selectMunicipio').value = '';
             document.getElementById('searchSEC').value = '';
             document.getElementById('searchCPF').value = '';
+            document.getElementById('searchNomePortador').value = '';
             applyFilters();
         });
 
