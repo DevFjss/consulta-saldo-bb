@@ -58,7 +58,7 @@
             border-spacing: 0;
             width: max-content;
             min-width: 100%;
-            table-layout: fixed; /* Essencial para o funcionamento do resize manual */
+            table-layout: fixed;
         }
 
         th, td {
@@ -78,16 +78,17 @@
             font-weight: 700;
         }
 
+        /* Congelamento Dinâmico */
         .sticky-col-1 {
             position: sticky;
-            left: 0;
+            left: 0px;
             z-index: 10;
             background-color: #ffffff !important;
         }
 
         .sticky-col-2 {
             position: sticky;
-            left: 110px;
+            left: 110px; /* Será atualizado via JS dinamicamente */
             z-index: 10;
             background-color: #ffffff !important;
         }
@@ -115,7 +116,7 @@
             background-color: #fef9c3 !important;
         }
 
-        /* Divisor Arrastável */
+        /* Divisor Arrastável Otimizado */
         .resizer {
             position: absolute;
             right: 0;
@@ -360,7 +361,7 @@
         </main>
     </div>
 
-    <!-- Script de Processamento e Redimensionamento de Colunas -->
+    <!-- Script de Processamento e Redimensionamento -->
     <script>
         const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
         const SHEET_NAME = 'Cartão Manutenção';
@@ -398,6 +399,7 @@
             Papa.parse(CSV_URL, {
                 download: true,
                 header: false,
+                dynamicTyping: false, // OBRIGATÓRIO: Mantém o código SEC como Texto integral sem cortar zeros ou alterar formato
                 skipEmptyLines: true,
                 complete: function(results) {
                     statusEl.classList.add('hidden');
@@ -412,22 +414,23 @@
                     const dataRows = rows.slice(2);
 
                     rawData = dataRows.map(row => ({
-                        nte: row[0] ? row[0].toString().trim() : '',
-                        municipio: row[1] ? row[1].toString().trim() : '',
-                        codigoSec: row[2] ? row[2].toString().trim() : '',
-                        codigoInep: row[3] ? row[3].toString().trim() : '',
-                        undEscolar: row[4] ? row[4].toString().trim() : '',
-                        cartao: row[5] ? row[5].toString().trim() : '',
-                        nomePortador: row[6] ? row[6].toString().trim() : '',
-                        cpf: row[7] ? row[7].toString().trim() : '',
-                        limiteImplantado: parseCurrency(row[8]), // Coluna I
-                        limiteDisponivel: parseCurrency(row[9]),  // Coluna J
-                        despesas: parseCurrency(row[11])           // Coluna L (Índice 11)
+                        nte: row[0] ? String(row[0]).trim() : '',
+                        municipio: row[1] ? String(row[1]).trim() : '',
+                        codigoSec: row[2] ? String(row[2]).trim() : '', // Garante leitura fiel
+                        codigoInep: row[3] ? String(row[3]).trim() : '',
+                        undEscolar: row[4] ? String(row[4]).trim() : '',
+                        cartao: row[5] ? String(row[5]).trim() : '',
+                        nomePortador: row[6] ? String(row[6]).trim() : '',
+                        cpf: row[7] ? String(row[7]).trim() : '',
+                        limiteImplantado: parseCurrency(row[8]),
+                        limiteDisponivel: parseCurrency(row[9]),
+                        despesas: parseCurrency(row[11])
                     })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
 
                     populateDropdowns();
                     applyFilters();
                     initResizableColumns();
+                    updateStickyPositions();
                 }
             });
         }
@@ -516,6 +519,7 @@
             });
 
             applyColumnVisibility();
+            updateStickyPositions();
         }
 
         function applyColumnVisibility() {
@@ -534,51 +538,59 @@
                     cell.style.display = isChecked ? '' : 'none';
                 });
             });
+            updateStickyPositions();
         }
 
-        /* LÓGICA DE REDIMENSIONAMENTO MANUAL DAS COLUNAS */
+        /* Recálculo Dinâmico das Posições de Células Congeladas */
+        function updateStickyPositions() {
+            const col0Header = document.querySelector('th.col-idx-0');
+            const col1Headers = document.querySelectorAll('.sticky-col-2');
+            if (col0Header) {
+                const col0Width = col0Header.style.display !== 'none' ? col0Header.offsetWidth : 0;
+                col1Headers.forEach(el => {
+                    el.style.left = `${col0Width}px`;
+                });
+            }
+        }
+
+        /* Redimensionamento Otimizado com RequestAnimationFrame */
         function initResizableColumns() {
             const resizers = document.querySelectorAll('.resizer');
 
             resizers.forEach(resizer => {
-                let startX, startWidth, th;
+                let startX, startWidth, th, isResizing = false;
 
                 resizer.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     th = resizer.parentElement;
                     startX = e.pageX;
                     startWidth = th.offsetWidth;
+                    isResizing = true;
 
                     resizer.classList.add('resizing');
+
+                    const onMouseMove = (moveEvent) => {
+                        if (!isResizing) return;
+                        requestAnimationFrame(() => {
+                            const newWidth = Math.max(60, startWidth + (moveEvent.pageX - startX));
+                            th.style.width = `${newWidth}px`;
+                            updateStickyPositions();
+                        });
+                    };
+
+                    const onMouseUp = () => {
+                        isResizing = false;
+                        resizer.classList.remove('resizing');
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
 
                     document.addEventListener('mousemove', onMouseMove);
                     document.addEventListener('mouseup', onMouseUp);
                 });
-
-                function onMouseMove(e) {
-                    const width = startWidth + (e.pageX - startX);
-                    if (width > 50) { // Largura mínima
-                        th.style.width = `${width}px`;
-
-                        // Ajuste para a segunda coluna congelada se a primeira for alterada
-                        if (th.classList.contains('col-idx-0')) {
-                            const col2 = document.querySelector('.sticky-col-2');
-                            if (col2) {
-                                col2.style.left = `${width}px`;
-                            }
-                        }
-                    }
-                }
-
-                function onMouseUp() {
-                    resizer.classList.remove('resizing');
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                }
             });
         }
 
-        // Selecionar/Desmarcar tudo
         document.getElementById('selectAllCols').addEventListener('change', (e) => {
             const isChecked = e.target.checked;
             document.querySelectorAll('.col-vis-toggle').forEach(cb => {
@@ -590,7 +602,6 @@
         document.querySelectorAll('.col-vis-toggle').forEach(cb => {
             cb.addEventListener('change', () => {
                 applyColumnVisibility();
-                
                 const allChecked = Array.from(document.querySelectorAll('.col-vis-toggle')).every(c => c.checked);
                 document.getElementById('selectAllCols').checked = allChecked;
             });
