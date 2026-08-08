@@ -170,7 +170,7 @@
         <!-- Conteúdo Principal -->
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-            <!-- Data/Hora Célula A1 com Fonte Aumentada -->
+            <!-- Data/Hora Célula A1 -->
             <div id="sheetUpdateBox" class="bg-customBlue-500 text-white p-4 rounded-xl flex items-center justify-between text-base shadow-sm">
                 <div class="flex items-center gap-3">
                     <i data-lucide="clock" class="w-6 h-6 text-customBlue-200"></i>
@@ -396,19 +396,20 @@
                         despesas: parseCurrency(row[11])
                     })).filter(item => item.nte !== '' || item.municipio !== '' || item.codigoSec !== '');
 
-                    populateDropdowns();
+                    populateNTEDropdown();
+                    populateMunicipioDropdown();
                     applyFilters();
                     initResizableColumns();
                 }
             });
         }
 
-        function populateDropdowns() {
+        // Popula a lista inicial de NTEs
+        function populateNTEDropdown() {
             const selectNTE = document.getElementById('selectNTE');
-            const selectMunicipio = document.getElementById('selectMunicipio');
-
-            const uniqueNTE = [...new Set(rawData.map(i => i.nte).filter(Boolean))].sort();
-            const uniqueMunicipio = [...new Set(rawData.map(i => i.municipio).filter(Boolean))].sort();
+            const uniqueNTE = [...new Set(rawData.map(i => i.nte).filter(Boolean))].sort((a, b) => {
+                return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+            });
 
             selectNTE.innerHTML = '<option value="">Todos os NTEs</option>';
             uniqueNTE.forEach(nte => {
@@ -417,6 +418,19 @@
                 opt.textContent = nte;
                 selectNTE.appendChild(opt);
             });
+        }
+
+        // Popula os Municípios filtrando de acordo com o NTE selecionado
+        function populateMunicipioDropdown(selectedNTE = '') {
+            const selectMunicipio = document.getElementById('selectMunicipio');
+            const currentSelectedMun = selectMunicipio.value;
+
+            let sourceData = rawData;
+            if (selectedNTE) {
+                sourceData = rawData.filter(item => item.nte === selectedNTE);
+            }
+
+            const uniqueMunicipio = [...new Set(sourceData.map(i => i.municipio).filter(Boolean))].sort();
 
             selectMunicipio.innerHTML = '<option value="">Todos os Municípios</option>';
             uniqueMunicipio.forEach(mun => {
@@ -425,6 +439,13 @@
                 opt.textContent = mun;
                 selectMunicipio.appendChild(opt);
             });
+
+            // Mantém o município selecionado anteriormente caso ele exista no novo NTE
+            if (uniqueMunicipio.includes(currentSelectedMun)) {
+                selectMunicipio.value = currentSelectedMun;
+            } else {
+                selectMunicipio.value = '';
+            }
         }
 
         function applyFilters() {
@@ -560,13 +581,20 @@
             });
         });
 
-        document.getElementById('selectNTE').addEventListener('change', applyFilters);
+        // Evento de alteração no seletor do NTE para atualizar o seletor de Município dinamicamente
+        document.getElementById('selectNTE').addEventListener('change', (e) => {
+            const selectedNTE = e.target.value;
+            populateMunicipioDropdown(selectedNTE);
+            applyFilters();
+        });
+
         document.getElementById('selectMunicipio').addEventListener('change', applyFilters);
         document.getElementById('searchSEC').addEventListener('input', applyFilters);
         document.getElementById('searchCPF').addEventListener('input', applyFilters);
 
         document.getElementById('resetFilters').addEventListener('click', () => {
             document.getElementById('selectNTE').value = '';
+            populateMunicipioDropdown('');
             document.getElementById('selectMunicipio').value = '';
             document.getElementById('searchSEC').value = '';
             document.getElementById('searchCPF').value = '';
