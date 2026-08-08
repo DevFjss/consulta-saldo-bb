@@ -69,6 +69,7 @@
             box-sizing: border-box;
         }
 
+        /* Apenas o cabeçalho fica fixo no topo ao rolar para baixo */
         thead th {
             position: sticky;
             top: 0;
@@ -76,38 +77,6 @@
             background-color: #1851ba !important;
             color: #ffffff !important;
             font-weight: 700;
-        }
-
-        /* Congelamento Dinâmico */
-        .sticky-col-1 {
-            position: sticky;
-            left: 0px;
-            z-index: 10;
-            background-color: #ffffff !important;
-        }
-
-        .sticky-col-2 {
-            position: sticky;
-            left: 110px; /* Será atualizado via JS dinamicamente */
-            z-index: 10;
-            background-color: #ffffff !important;
-        }
-
-        thead th.sticky-col-1,
-        thead th.sticky-col-2 {
-            z-index: 35 !important;
-            background-color: #1851ba !important;
-        }
-
-        .sticky-col-2::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: -5px;
-            bottom: 0;
-            width: 5px;
-            pointer-events: none;
-            box-shadow: inset -10px 0 8px -8px rgba(10, 35, 92, 0.25);
         }
 
         .col-highlight {
@@ -334,8 +303,8 @@
                     <table id="dataTable" class="text-left text-sm">
                         <thead>
                             <tr>
-                                <th class="px-4 py-3.5 sticky-col-1 col-idx-0" style="width: 110px;">NTE<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 sticky-col-2 col-idx-1" style="width: 160px;">Município<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-0" style="width: 110px;">NTE<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-1" style="width: 160px;">Município<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-2" style="width: 130px;">Código SEC<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-3" style="width: 130px;">Código Inep<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-4" style="width: 250px;">Und. Escolar<div class="resizer"></div></th>
@@ -399,7 +368,7 @@
             Papa.parse(CSV_URL, {
                 download: true,
                 header: false,
-                dynamicTyping: false, // OBRIGATÓRIO: Mantém o código SEC como Texto integral sem cortar zeros ou alterar formato
+                dynamicTyping: false,
                 skipEmptyLines: true,
                 complete: function(results) {
                     statusEl.classList.add('hidden');
@@ -416,7 +385,7 @@
                     rawData = dataRows.map(row => ({
                         nte: row[0] ? String(row[0]).trim() : '',
                         municipio: row[1] ? String(row[1]).trim() : '',
-                        codigoSec: row[2] ? String(row[2]).trim() : '', // Garante leitura fiel
+                        codigoSec: row[2] ? String(row[2]).trim() : '',
                         codigoInep: row[3] ? String(row[3]).trim() : '',
                         undEscolar: row[4] ? String(row[4]).trim() : '',
                         cartao: row[5] ? String(row[5]).trim() : '',
@@ -430,7 +399,6 @@
                     populateDropdowns();
                     applyFilters();
                     initResizableColumns();
-                    updateStickyPositions();
                 }
             });
         }
@@ -503,8 +471,8 @@
                 tr.className = "hover:bg-customBlue-50 transition-colors border-b border-customBlue-100";
 
                 tr.innerHTML = `
-                    <td class="px-4 py-3 font-semibold text-customBlue-900 sticky-col-1 col-idx-0">${item.nte}</td>
-                    <td class="px-4 py-3 sticky-col-2 col-idx-1">${item.municipio}</td>
+                    <td class="px-4 py-3 font-semibold text-customBlue-900 col-idx-0">${item.nte}</td>
+                    <td class="px-4 py-3 col-idx-1">${item.municipio}</td>
                     <td class="px-4 py-3 font-mono text-xs col-idx-2">${item.codigoSec}</td>
                     <td class="px-4 py-3 font-mono text-xs col-idx-3">${item.codigoInep}</td>
                     <td class="px-4 py-3 font-medium col-idx-4">${item.undEscolar}</td>
@@ -519,7 +487,6 @@
             });
 
             applyColumnVisibility();
-            updateStickyPositions();
         }
 
         function applyColumnVisibility() {
@@ -538,22 +505,9 @@
                     cell.style.display = isChecked ? '' : 'none';
                 });
             });
-            updateStickyPositions();
         }
 
-        /* Recálculo Dinâmico das Posições de Células Congeladas */
-        function updateStickyPositions() {
-            const col0Header = document.querySelector('th.col-idx-0');
-            const col1Headers = document.querySelectorAll('.sticky-col-2');
-            if (col0Header) {
-                const col0Width = col0Header.style.display !== 'none' ? col0Header.offsetWidth : 0;
-                col1Headers.forEach(el => {
-                    el.style.left = `${col0Width}px`;
-                });
-            }
-        }
-
-        /* Redimensionamento Otimizado com RequestAnimationFrame */
+        /* Redimensionamento Fluido por Coluna */
         function initResizableColumns() {
             const resizers = document.querySelectorAll('.resizer');
 
@@ -574,7 +528,6 @@
                         requestAnimationFrame(() => {
                             const newWidth = Math.max(60, startWidth + (moveEvent.pageX - startX));
                             th.style.width = `${newWidth}px`;
-                            updateStickyPositions();
                         });
                     };
 
