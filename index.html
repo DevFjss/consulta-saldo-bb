@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Cartão Manutenção</title>
+    <title>Painel de Cartões e Recursos</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -11,15 +11,15 @@
             theme: {
                 extend: {
                     colors: {
-                        customBlue: {
-                            50: '#eef4ff',
-                            100: '#e0ebff',
-                            200: '#c7d9fe',
-                            500: '#1851ba',
-                            600: '#1343a0',
-                            700: '#0e3380',
-                            800: '#0a235c',
-                            900: '#071842',
+                        themeMain: {
+                            50: 'var(--color-50)',
+                            100: 'var(--color-100)',
+                            200: 'var(--color-200)',
+                            500: 'var(--color-500)',
+                            600: 'var(--color-600)',
+                            700: 'var(--color-700)',
+                            800: 'var(--color-800)',
+                            900: 'var(--color-900)',
                         }
                     }
                 }
@@ -32,19 +32,55 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <style>
+        /* Variáveis de Cores Padrão (Manutenção - Azul) */
+        :root {
+            --color-50: #eef4ff;
+            --color-100: #e0ebff;
+            --color-200: #c7d9fe;
+            --color-500: #1851ba;
+            --color-600: #1343a0;
+            --color-700: #0e3380;
+            --color-800: #0a235c;
+            --color-900: #071842;
+        }
+
+        /* Tema PNAE - Amarelo */
+        body.theme-pnae {
+            --color-50: #fefce8;
+            --color-100: #fef9c3;
+            --color-200: #fef08a;
+            --color-500: #ca8a04;
+            --color-600: #a16207;
+            --color-700: #854d0e;
+            --color-800: #713f12;
+            --color-900: #422006;
+        }
+
+        /* Tema FAED - Verde */
+        body.theme-faed {
+            --color-50: #f0fdf4;
+            --color-100: #dcfce7;
+            --color-200: #bbf7d0;
+            --color-500: #16a34a;
+            --color-600: #15803d;
+            --color-700: #15652c;
+            --color-800: #164e28;
+            --color-900: #052e16;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #e0ebff;
+            background: var(--color-100);
         }
         ::-webkit-scrollbar-thumb {
-            background: #1851ba;
+            background: var(--color-500);
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #1343a0;
+            background: var(--color-600);
         }
 
         .table-container {
@@ -74,7 +110,7 @@
             position: sticky;
             top: 0;
             z-index: 25;
-            background-color: #1851ba !important;
+            background-color: var(--color-500) !important;
             color: #ffffff !important;
             font-weight: 700;
         }
@@ -101,28 +137,54 @@
         .resizer:hover, .resizer.resizing {
             background: #eab308;
         }
+
+        .tab-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-btn.active {
+            background-color: #ffffff;
+            color: var(--color-900);
+            font-weight: 800;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
-<body class="bg-customBlue-50 text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="bg-themeMain-50 text-slate-800 min-h-screen flex flex-col font-sans transition-colors duration-300">
 
-    <!-- Navbar Topo -->
-    <header class="bg-customBlue-500 text-white h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-50 shadow-md">
-        <div class="flex items-center gap-3">
-            <button id="toggleSidebar" class="p-2 rounded-lg text-white hover:bg-customBlue-600 focus:outline-none transition-colors">
+    <!-- Navbar Topo com Abas de Navegação -->
+    <header class="bg-themeMain-500 text-white flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 sticky top-0 z-50 shadow-md transition-colors duration-300">
+        <div class="flex items-center gap-3 h-16">
+            <button id="toggleSidebar" class="p-2 rounded-lg text-white hover:bg-themeMain-600 focus:outline-none transition-colors">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
             <div class="flex items-center gap-2">
-                <div class="bg-white text-customBlue-500 p-2 rounded-lg shadow-sm">
+                <div class="bg-white text-themeMain-500 p-2 rounded-lg shadow-sm">
                     <i data-lucide="credit-card" class="w-5 h-5"></i>
                 </div>
                 <h1 class="text-xl font-bold tracking-wide">
-                    Painel Cartão Manutenção
+                    Painel Gestão de Recursos
                 </h1>
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div id="loadingStatus" class="hidden flex items-center gap-2 text-xs text-customBlue-100 font-medium">
+        <!-- Seletor de Abas -->
+        <div class="flex items-center bg-black/10 p-1 rounded-xl gap-1 mb-2 sm:mb-0">
+            <button data-sheet="Cartão Manutenção" data-theme="" class="tab-btn active px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2">
+                <i data-lucide="wrench" class="w-4 h-4"></i>
+                Base Manutenção
+            </button>
+            <button data-sheet="Base Pnae" data-theme="theme-pnae" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-white/80 hover:text-white">
+                <i data-lucide="utensils" class="w-4 h-4"></i>
+                Base PNAE
+            </button>
+            <button data-sheet="Base Faed" data-theme="theme-faed" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-white/80 hover:text-white">
+                <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                Base FAED
+            </button>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-4">
+            <div id="loadingStatus" class="hidden flex items-center gap-2 text-xs text-themeMain-100 font-medium">
                 <i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>
                 <span>Carregando dados...</span>
             </div>
@@ -131,38 +193,38 @@
 
     <div class="flex flex-1 overflow-hidden">
         <!-- Sidebar Filtros -->
-        <aside id="sidebar" class="w-72 bg-white border-r border-customBlue-200 flex flex-col transition-all duration-300 z-30 shadow-sm">
-            <div class="p-4 border-b border-customBlue-100 flex items-center justify-between bg-customBlue-50">
-                <span class="text-xs font-bold uppercase tracking-wider text-customBlue-700">Filtros de Validação</span>
-                <button id="resetFilters" class="text-xs text-customBlue-500 hover:text-customBlue-700 font-semibold flex items-center gap-1 transition-colors">
+        <aside id="sidebar" class="w-72 bg-white border-r border-themeMain-200 flex flex-col transition-all duration-300 z-30 shadow-sm">
+            <div class="p-4 border-b border-themeMain-100 flex items-center justify-between bg-themeMain-50">
+                <span class="text-xs font-bold uppercase tracking-wider text-themeMain-700">Filtros de Validação</span>
+                <button id="resetFilters" class="text-xs text-themeMain-500 hover:text-themeMain-700 font-semibold flex items-center gap-1 transition-colors">
                     <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Limpar
                 </button>
             </div>
 
             <div class="p-4 space-y-6 overflow-y-auto flex-1">
                 <div>
-                    <label for="selectNTE" class="block text-sm font-semibold text-customBlue-900 mb-2 flex items-center gap-2">
-                        <i data-lucide="building-2" class="w-4 h-4 text-customBlue-500"></i>
+                    <label for="selectNTE" class="block text-sm font-semibold text-themeMain-900 mb-2 flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4 text-themeMain-500"></i>
                         NTE (Coluna A)
                     </label>
-                    <select id="selectNTE" class="w-full bg-customBlue-50 border border-customBlue-200 text-customBlue-900 text-sm rounded-lg focus:ring-2 focus:ring-customBlue-500 p-2.5 outline-none transition-all">
+                    <select id="selectNTE" class="w-full bg-themeMain-50 border border-themeMain-200 text-themeMain-900 text-sm rounded-lg focus:ring-2 focus:ring-themeMain-500 p-2.5 outline-none transition-all">
                         <option value="">Todos os NTEs</option>
                     </select>
                 </div>
 
                 <div>
-                    <label for="selectMunicipio" class="block text-sm font-semibold text-customBlue-900 mb-2 flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-4 h-4 text-customBlue-500"></i>
+                    <label for="selectMunicipio" class="block text-sm font-semibold text-themeMain-900 mb-2 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-themeMain-500"></i>
                         Município (Coluna B)
                     </label>
-                    <select id="selectMunicipio" class="w-full bg-customBlue-50 border border-customBlue-200 text-customBlue-900 text-sm rounded-lg focus:ring-2 focus:ring-customBlue-500 p-2.5 outline-none transition-all">
+                    <select id="selectMunicipio" class="w-full bg-themeMain-50 border border-themeMain-200 text-themeMain-900 text-sm rounded-lg focus:ring-2 focus:ring-themeMain-500 p-2.5 outline-none transition-all">
                         <option value="">Todos os Municípios</option>
                     </select>
                 </div>
 
-                <div class="p-4 rounded-xl bg-customBlue-100/70 border border-customBlue-200 space-y-1">
-                    <div class="text-xs text-customBlue-800 font-bold uppercase">Registros Encontrados</div>
-                    <div id="recordsCount" class="text-3xl font-extrabold text-customBlue-900">0</div>
+                <div class="p-4 rounded-xl bg-themeMain-100/70 border border-themeMain-200 space-y-1">
+                    <div class="text-xs text-themeMain-800 font-bold uppercase">Registros Encontrados</div>
+                    <div id="recordsCount" class="text-3xl font-extrabold text-themeMain-900">0</div>
                 </div>
             </div>
         </aside>
@@ -171,23 +233,23 @@
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
             <!-- Data/Hora Célula A1 -->
-            <div id="sheetUpdateBox" class="bg-customBlue-500 text-white p-4 rounded-xl flex items-center justify-between text-base shadow-sm">
+            <div id="sheetUpdateBox" class="bg-themeMain-500 text-white p-4 rounded-xl flex items-center justify-between text-base shadow-sm transition-colors duration-300">
                 <div class="flex items-center gap-3">
-                    <i data-lucide="clock" class="w-6 h-6 text-customBlue-200"></i>
+                    <i data-lucide="clock" class="w-6 h-6 text-themeMain-200"></i>
                     <span><strong>Data/Hora da Planilha (Célula A1):</strong> <span id="sheetDateA1" class="text-lg font-extrabold text-amber-300 ml-1">Carregando...</span></span>
                 </div>
-                <span class="text-sm text-customBlue-200 font-medium italic">Sincronização em tempo real</span>
+                <span class="text-sm text-themeMain-200 font-medium italic">Sincronização em tempo real</span>
             </div>
 
             <!-- Gerenciador de Exibição de Colunas -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-customBlue-200 space-y-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-themeMain-200 space-y-3">
                 <div class="flex items-center justify-between">
-                    <button id="toggleColMenu" class="px-4 py-2 bg-customBlue-500 hover:bg-customBlue-600 text-white rounded-lg text-xs font-bold flex items-center gap-2 transition-colors">
-                        <i data-lucide="columns" class="w-4 h-4 text-customBlue-200"></i>
+                    <button id="toggleColMenu" class="px-4 py-2 bg-themeMain-500 hover:bg-themeMain-600 text-white rounded-lg text-xs font-bold flex items-center gap-2 transition-colors">
+                        <i data-lucide="columns" class="w-4 h-4 text-themeMain-200"></i>
                         Ocultar / Reexibir Colunas
                         <i data-lucide="chevron-down" class="w-3 h-3"></i>
                     </button>
-                    <span class="text-xs text-customBlue-700">Destaque na coluna CPF em <span class="text-amber-600 font-bold">Amarelo</span></span>
+                    <span class="text-xs text-themeMain-700">Destaque na coluna CPF em <span class="text-amber-600 font-bold">Amarelo</span></span>
                 </div>
 
                 <div id="colMenuContainer" class="hidden p-3 bg-slate-900 rounded-lg border border-slate-700 flex flex-col space-y-2 text-xs text-slate-100">
@@ -199,31 +261,31 @@
                     </div>
 
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="0" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="0" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>NTE (Coluna A)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="1" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="1" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Município (Coluna B)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="2" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="2" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Código SEC (Coluna C)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="3" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="3" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Código Inep (Coluna D)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="4" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="4" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Und. Escolar (Coluna E)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="5" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="5" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Cartão (Coluna F)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="6" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="6" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Nome Portador (Coluna G)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer bg-amber-500/20 hover:bg-amber-500/30 p-1.5 rounded transition-colors font-bold text-amber-300 border border-amber-500/40">
@@ -231,15 +293,15 @@
                         <span>CPF (Coluna H) - Destacado em Amarelo</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="8" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="8" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Limite Implantado (Coluna I)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="9" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="9" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Limite Disponível (Coluna J)</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-1.5 rounded transition-colors font-medium">
-                        <input type="checkbox" data-col="10" checked class="col-vis-toggle accent-customBlue-500 w-4 h-4"> 
+                        <input type="checkbox" data-col="10" checked class="col-vis-toggle accent-themeMain-500 w-4 h-4"> 
                         <span>Despesas (Coluna L)</span>
                     </label>
                 </div>
@@ -248,15 +310,15 @@
             <!-- Pesquisas Diretas -->
             <div class="space-y-3">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-customBlue-200">
-                        <label class="block text-xs font-semibold text-customBlue-800 mb-1">Pesquisar por Código SEC (Coluna C)</label>
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-themeMain-200">
+                        <label class="block text-xs font-semibold text-themeMain-800 mb-1">Pesquisar por Código SEC (Coluna C)</label>
                         <div class="relative">
-                            <i data-lucide="search" class="w-4 h-4 text-customBlue-500 absolute left-3 top-3"></i>
-                            <input type="text" id="searchSEC" placeholder="Digite o Código SEC..." class="w-full pl-9 pr-4 py-2 bg-customBlue-50 border border-customBlue-200 rounded-lg text-sm text-customBlue-900 outline-none focus:ring-2 focus:ring-customBlue-500">
+                            <i data-lucide="search" class="w-4 h-4 text-themeMain-500 absolute left-3 top-3"></i>
+                            <input type="text" id="searchSEC" placeholder="Digite o Código SEC..." class="w-full pl-9 pr-4 py-2 bg-themeMain-50 border border-themeMain-200 rounded-lg text-sm text-themeMain-900 outline-none focus:ring-2 focus:ring-themeMain-500">
                         </div>
                     </div>
 
-                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-customBlue-200">
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-themeMain-200">
                         <label class="block text-xs font-semibold text-amber-800 mb-1">Pesquisar por CPF (Coluna H)</label>
                         <div class="relative">
                             <i data-lucide="user-check" class="w-4 h-4 text-amber-500 absolute left-3 top-3"></i>
@@ -265,27 +327,27 @@
                     </div>
                 </div>
 
-                <!-- Painel Informativo do Portador (Exibido Dinamicamente ao Pesquisar) -->
-                <div id="portadorDisplay" class="hidden bg-customBlue-800 text-white p-4 rounded-xl shadow-md border-l-4 border-amber-400 transition-all">
-                    <div class="text-xs uppercase tracking-wider text-customBlue-200 font-semibold mb-1">Portador Localizado (Coluna G)</div>
+                <!-- Painel Informativo do Portador -->
+                <div id="portadorDisplay" class="hidden bg-themeMain-800 text-white p-4 rounded-xl shadow-md border-l-4 border-amber-400 transition-all">
+                    <div class="text-xs uppercase tracking-wider text-themeMain-200 font-semibold mb-1">Portador Localizado (Coluna G)</div>
                     <div id="portadorNome" class="text-xl font-extrabold text-amber-300">--</div>
-                    <div id="portadorEscola" class="text-sm text-customBlue-100 mt-1 font-medium">--</div>
+                    <div id="portadorEscola" class="text-sm text-themeMain-100 mt-1 font-medium">--</div>
                 </div>
             </div>
 
             <!-- Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-customBlue-200 flex items-center justify-between">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-themeMain-200 flex items-center justify-between">
                     <div class="space-y-1">
-                        <span class="text-xs font-bold uppercase tracking-wider text-customBlue-600">Limite Implantado</span>
-                        <div id="cardImplantado" class="text-2xl font-black text-customBlue-900">R$ 0,00</div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-themeMain-600">Limite Implantado</span>
+                        <div id="cardImplantado" class="text-2xl font-black text-themeMain-900">R$ 0,00</div>
                     </div>
-                    <div class="p-3 bg-customBlue-100 rounded-xl text-customBlue-500">
+                    <div class="p-3 bg-themeMain-100 rounded-xl text-themeMain-500">
                         <i data-lucide="wallet" class="w-8 h-8"></i>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-customBlue-200 flex items-center justify-between">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-themeMain-200 flex items-center justify-between">
                     <div class="space-y-1">
                         <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Limite Disponível</span>
                         <div id="cardDisponivel" class="text-2xl font-black text-emerald-700">R$ 0,00</div>
@@ -295,7 +357,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-customBlue-200 flex items-center justify-between">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-themeMain-200 flex items-center justify-between">
                     <div class="space-y-1">
                         <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Despesas</span>
                         <div id="cardDespesas" class="text-2xl font-black text-amber-700">R$ 0,00</div>
@@ -307,7 +369,7 @@
             </div>
 
             <!-- Tabela de Dados -->
-            <div class="bg-white rounded-xl shadow-sm border border-customBlue-200 overflow-hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-themeMain-200 overflow-hidden">
                 <div class="table-container">
                     <table id="dataTable" class="text-left text-sm">
                         <thead>
@@ -325,9 +387,9 @@
                                 <th class="px-4 py-3.5 col-idx-10 text-right" style="width: 140px;">Despesas (Col L)<div class="resizer"></div></th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-customBlue-100 text-slate-700">
+                        <tbody id="tableBody" class="divide-y divide-themeMain-100 text-slate-700">
                             <tr>
-                                <td colspan="11" class="text-center py-8 text-customBlue-500">
+                                <td colspan="11" class="text-center py-8 text-themeMain-500">
                                     Carregando informações da planilha...
                                 </td>
                             </tr>
@@ -339,16 +401,40 @@
         </main>
     </div>
 
-    <!-- Script de Processamento e Redimensionamento -->
+    <!-- Script de Processamento, Abas e Redimensionamento -->
     <script>
         const SHEET_ID = '1caYX7A6chrtTVseC7qZqqxQzhkO49ZiuR4dVsRPAY5I';
-        const SHEET_NAME = 'Cartão Manutenção';
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:L`;
+        let currentSheetName = 'Cartão Manutenção';
 
         let rawData = [];
         let filteredData = [];
 
         lucide.createIcons();
+
+        // Troca de Abas e Temas
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.classList.add('text-white/80');
+                });
+
+                const target = e.currentTarget;
+                target.classList.add('active');
+                target.classList.remove('text-white/80');
+
+                currentSheetName = target.getAttribute('data-sheet');
+                const themeClass = target.getAttribute('data-theme');
+
+                // Aplicação do Tema no Body
+                document.body.className = "text-slate-800 min-h-screen flex flex-col font-sans transition-colors duration-300 bg-themeMain-50";
+                if (themeClass) {
+                    document.body.classList.add(themeClass);
+                }
+
+                loadSheetData();
+            });
+        });
 
         document.getElementById('toggleColMenu').addEventListener('click', () => {
             document.getElementById('colMenuContainer').classList.toggle('hidden');
@@ -373,6 +459,8 @@
         function loadSheetData() {
             const statusEl = document.getElementById('loadingStatus');
             statusEl.classList.remove('hidden');
+
+            const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}&range=A1:L`;
 
             Papa.parse(CSV_URL, {
                 download: true,
@@ -467,9 +555,7 @@
                 return matchNTE && matchMun && matchSEC && matchCPF;
             });
 
-            // Atualiza exibição do Nome do Portador se houver uma pesquisa em andamento
             updatePortadorDisplay(secVal, cpfVal);
-
             updateCards();
             renderTable();
         }
@@ -479,7 +565,6 @@
             const nomeEl = document.getElementById('portadorNome');
             const escolaEl = document.getElementById('portadorEscola');
 
-            // Se o usuário estiver pesquisando por Código SEC ou CPF e encontrar registros
             if ((secVal || cpfVal) && filteredData.length > 0) {
                 const primeiroReg = filteredData[0];
                 nomeEl.textContent = primeiroReg.nomePortador || 'Nome não cadastrado';
@@ -513,10 +598,10 @@
 
             filteredData.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-customBlue-50 transition-colors border-b border-customBlue-100";
+                tr.className = "hover:bg-themeMain-50 transition-colors border-b border-themeMain-100";
 
                 tr.innerHTML = `
-                    <td class="px-4 py-3 font-semibold text-customBlue-900 col-idx-0">${item.nte}</td>
+                    <td class="px-4 py-3 font-semibold text-themeMain-900 col-idx-0">${item.nte}</td>
                     <td class="px-4 py-3 col-idx-1">${item.municipio}</td>
                     <td class="px-4 py-3 font-mono text-xs col-idx-2">${item.codigoSec}</td>
                     <td class="px-4 py-3 font-mono text-xs col-idx-3">${item.codigoInep}</td>
@@ -524,7 +609,7 @@
                     <td class="px-4 py-3 font-mono text-xs col-idx-5">${item.cartao}</td>
                     <td class="px-4 py-3 col-idx-6">${item.nomePortador}</td>
                     <td class="px-4 py-3 font-mono text-xs col-idx-7 col-highlight font-bold text-amber-900">${item.cpf}</td>
-                    <td class="px-4 py-3 text-right font-medium text-customBlue-700 col-idx-8">${formatCurrency(item.limiteImplantado)}</td>
+                    <td class="px-4 py-3 text-right font-medium text-themeMain-700 col-idx-8">${formatCurrency(item.limiteImplantado)}</td>
                     <td class="px-4 py-3 text-right font-medium text-emerald-700 col-idx-9">${formatCurrency(item.limiteDisponivel)}</td>
                     <td class="px-4 py-3 text-right font-medium text-amber-700 col-idx-10">${formatCurrency(item.despesas)}</td>
                 `;
