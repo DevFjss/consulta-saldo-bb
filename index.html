@@ -83,6 +83,22 @@
         .badge-manutencao { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
         .badge-pnae { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
         .badge-faed { background-color: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .progress-bar .fill.low { background: #22c55e; }
+        .progress-bar .fill.medium { background: #eab308; }
+        .progress-bar .fill.high { background: #ef4444; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
@@ -223,8 +239,19 @@
                                 <span class="text-xs font-bold text-blue-300 uppercase">Cartão Manutenção</span>
                                 <i data-lucide="wrench" class="w-4 h-4 text-blue-400"></i>
                             </div>
+                            <div class="text-xs text-slate-300">
+                                Nº Cartão: <strong id="numCartaoManutencao" class="text-blue-300 font-mono">--</strong>
+                            </div>
                             <div class="text-xs text-slate-300">Disp: <strong id="sumDispManutencao" class="text-emerald-400 font-bold">R$ 0,00</strong></div>
                             <div class="text-xs text-slate-300">Imp: <span id="sumImpManutencao" class="text-white">R$ 0,00</span> | Desp: <span id="sumDespManutencao" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="progress-bar">
+                                <div id="progressManutencao" class="fill low" style="width: 0%;"></div>
+                            </div>
+                            <div class="text-xs text-slate-400 flex justify-between">
+                                <span>0%</span>
+                                <span id="pctManutencao">0%</span>
+                                <span>100%</span>
+                            </div>
                         </div>
 
                         <!-- PNAE -->
@@ -233,8 +260,19 @@
                                 <span class="text-xs font-bold text-amber-300 uppercase">Cartão PNAE</span>
                                 <i data-lucide="utensils" class="w-4 h-4 text-amber-400"></i>
                             </div>
+                            <div class="text-xs text-slate-300">
+                                Nº Cartão: <strong id="numCartaoPnae" class="text-amber-300 font-mono">--</strong>
+                            </div>
                             <div class="text-xs text-slate-300">Disp: <strong id="sumDispPnae" class="text-emerald-400 font-bold">R$ 0,00</strong></div>
                             <div class="text-xs text-slate-300">Imp: <span id="sumImpPnae" class="text-white">R$ 0,00</span> | Desp: <span id="sumDespPnae" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="progress-bar">
+                                <div id="progressPnae" class="fill low" style="width: 0%;"></div>
+                            </div>
+                            <div class="text-xs text-slate-400 flex justify-between">
+                                <span>0%</span>
+                                <span id="pctPnae">0%</span>
+                                <span>100%</span>
+                            </div>
                         </div>
 
                         <!-- FAED -->
@@ -243,8 +281,19 @@
                                 <span class="text-xs font-bold text-slate-300 uppercase">Cartão FAED</span>
                                 <i data-lucide="graduation-cap" class="w-4 h-4 text-slate-400"></i>
                             </div>
+                            <div class="text-xs text-slate-300">
+                                Nº Cartão: <strong id="numCartaoFaed" class="text-slate-300 font-mono">--</strong>
+                            </div>
                             <div class="text-xs text-slate-300">Disp: <strong id="sumDispFaed" class="text-emerald-400 font-bold">R$ 0,00</strong></div>
                             <div class="text-xs text-slate-300">Imp: <span id="sumImpFaed" class="text-white">R$ 0,00</span> | Desp: <span id="sumDespFaed" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="progress-bar">
+                                <div id="progressFaed" class="fill low" style="width: 0%;"></div>
+                            </div>
+                            <div class="text-xs text-slate-400 flex justify-between">
+                                <span>0%</span>
+                                <span id="pctFaed">0%</span>
+                                <span>100%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -345,6 +394,12 @@
 
         function formatCurrency(num) {
             return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function getProgressClass(percentage) {
+            if (percentage < 50) return 'low';
+            if (percentage < 80) return 'medium';
+            return 'high';
         }
 
         // Carrega as 3 abas simultaneamente
@@ -498,7 +553,10 @@
 
                 const getTotalsBySheet = (sheetName) => {
                     const filtered = registrosEscola.filter(r => r.origemAba === sheetName);
+                    const cartaoNumeros = filtered.map(r => r.cartao).filter(Boolean);
+                    const cartaoUnico = cartaoNumeros.length > 0 ? cartaoNumeros[0] : '--';
                     return {
+                        cartao: cartaoUnico,
                         imp: filtered.reduce((acc, c) => acc + c.limiteImplantado, 0),
                         disp: filtered.reduce((acc, c) => acc + c.limiteDisponivel, 0),
                         desp: filtered.reduce((acc, c) => acc + c.despesas, 0)
@@ -506,23 +564,45 @@
                 };
 
                 const man = getTotalsBySheet('Cartão Manutenção');
+                document.getElementById('numCartaoManutencao').textContent = man.cartao;
                 document.getElementById('sumDispManutencao').textContent = formatCurrency(man.disp);
                 document.getElementById('sumImpManutencao').textContent = formatCurrency(man.imp);
                 document.getElementById('sumDespManutencao').textContent = formatCurrency(man.desp);
+                updateProgressBar('progressManutencao', 'pctManutencao', man.imp, man.desp);
 
                 const pnae = getTotalsBySheet('Cartao Pnae');
+                document.getElementById('numCartaoPnae').textContent = pnae.cartao;
                 document.getElementById('sumDispPnae').textContent = formatCurrency(pnae.disp);
                 document.getElementById('sumImpPnae').textContent = formatCurrency(pnae.imp);
                 document.getElementById('sumDespPnae').textContent = formatCurrency(pnae.desp);
+                updateProgressBar('progressPnae', 'pctPnae', pnae.imp, pnae.desp);
 
                 const faed = getTotalsBySheet('Cartao Faed');
+                document.getElementById('numCartaoFaed').textContent = faed.cartao;
                 document.getElementById('sumDispFaed').textContent = formatCurrency(faed.disp);
                 document.getElementById('sumImpFaed').textContent = formatCurrency(faed.imp);
                 document.getElementById('sumDespFaed').textContent = formatCurrency(faed.desp);
+                updateProgressBar('progressFaed', 'pctFaed', faed.imp, faed.desp);
 
                 displayEl.classList.remove('hidden');
             } else {
                 displayEl.classList.add('hidden');
+            }
+        }
+
+        function updateProgressBar(progressId, pctId, implantado, despesas) {
+            const progressEl = document.getElementById(progressId);
+            const pctEl = document.getElementById(pctId);
+            
+            if (implantado > 0) {
+                const percentage = Math.min(100, (despesas / implantado) * 100);
+                progressEl.style.width = percentage + '%';
+                progressEl.className = 'fill ' + getProgressClass(percentage);
+                pctEl.textContent = percentage.toFixed(1) + '%';
+            } else {
+                progressEl.style.width = '0%';
+                progressEl.className = 'fill low';
+                pctEl.textContent = '0%';
             }
         }
 
