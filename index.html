@@ -10,6 +10,12 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- PapaParse para conversão de CSV em JSON -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- jsPDF para exportar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jspdf-autotable para tabelas no PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- SheetJS (XLSX) para exportar Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         ::-webkit-scrollbar {
@@ -99,6 +105,17 @@
         .progress-bar .fill.low { background: #22c55e; }
         .progress-bar .fill.medium { background: #eab308; }
         .progress-bar .fill.high { background: #ef4444; }
+
+        .btn-export {
+            transition: all 0.2s ease;
+        }
+        .btn-export:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-export:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
@@ -307,36 +324,51 @@
                 </div>
             </div>
 
-            <!-- Totalizadores Gerais -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div class="space-y-1">
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Limite Implantado Total</span>
-                        <div id="cardImplantado" class="text-2xl font-black text-slate-900">R$ 0,00</div>
+            <!-- Botões de Exportação e Totalizadores -->
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <!-- Totalizadores Gerais -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Limite Implantado</span>
+                            <div id="cardImplantado" class="text-xl font-black text-slate-900">R$ 0,00</div>
+                        </div>
+                        <div class="p-2 bg-sky-100 rounded-xl text-sky-600">
+                            <i data-lucide="wallet" class="w-6 h-6"></i>
+                        </div>
                     </div>
-                    <div class="p-3 bg-sky-100 rounded-xl text-sky-600">
-                        <i data-lucide="wallet" class="w-8 h-8"></i>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Limite Disponível</span>
+                            <div id="cardDisponivel" class="text-xl font-black text-emerald-700">R$ 0,00</div>
+                        </div>
+                        <div class="p-2 bg-emerald-100 rounded-xl text-emerald-600">
+                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Despesas Totais</span>
+                            <div id="cardDespesas" class="text-xl font-black text-amber-700">R$ 0,00</div>
+                        </div>
+                        <div class="p-2 bg-amber-100 rounded-xl text-amber-600">
+                            <i data-lucide="trending-down" class="w-6 h-6"></i>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div class="space-y-1">
-                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Limite Disponível Total</span>
-                        <div id="cardDisponivel" class="text-2xl font-black text-emerald-700">R$ 0,00</div>
-                    </div>
-                    <div class="p-3 bg-emerald-100 rounded-xl text-emerald-600">
-                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div class="space-y-1">
-                        <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Despesas Totais</span>
-                        <div id="cardDespesas" class="text-2xl font-black text-amber-700">R$ 0,00</div>
-                    </div>
-                    <div class="p-3 bg-amber-100 rounded-xl text-amber-600">
-                        <i data-lucide="trending-down" class="w-8 h-8"></i>
-                    </div>
+                <!-- Botões de Exportação -->
+                <div class="flex gap-2">
+                    <button id="exportExcel" class="btn-export bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        Excel
+                    </button>
+                    <button id="exportPDF" class="btn-export bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        PDF
+                    </button>
                 </div>
             </div>
 
@@ -700,6 +732,156 @@
             });
         }
 
+        // ========== FUNÇÕES DE EXPORTAÇÃO ==========
+
+        // Exportar para Excel
+        function exportToExcel() {
+            if (filteredData.length === 0) {
+                alert('Não há dados para exportar!');
+                return;
+            }
+
+            const headers = [
+                'Aba Origem', 'NTE', 'Município', 'Código SEC', 'Código Inep',
+                'Und. Escolar', 'Cartão', 'Nome Portador', 'CPF',
+                'Limite Implantado', 'Limite Disponível', 'Despesas'
+            ];
+
+            const rows = filteredData.map(item => [
+                item.origemLabel,
+                item.nte,
+                item.municipio,
+                item.codigoSec,
+                item.codigoInep,
+                item.undEscolar,
+                item.cartao,
+                item.nomePortador,
+                item.cpf,
+                item.limiteImplantado,
+                item.limiteDisponivel,
+                item.despesas
+            ]);
+
+            const data = [headers, ...rows];
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
+                { wch: 30 }, { wch: 16 }, { wch: 28 }, { wch: 16 },
+                { wch: 18 }, { wch: 18 }, { wch: 16 }
+            ];
+            ws['!cols'] = colWidths;
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+            
+            const fileName = `consolidado_recursos_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Exportar para PDF
+        function exportToPDF() {
+            if (filteredData.length === 0) {
+                alert('Não há dados para exportar!');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+
+            // Título
+            doc.setFontSize(14);
+            doc.setTextColor(30, 58, 138);
+            doc.text('Painel Consolidado de Recursos - Manutenção, PNAE e FAED', 14, 15);
+
+            // Subtítulo com data
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            doc.text(`Data de exportação: ${dataAtual}`, 14, 22);
+
+            // Preparar dados para a tabela
+            const headers = [
+                ['Aba', 'NTE', 'Município', 'SEC', 'Inep', 'Unidade Escolar', 
+                 'Cartão', 'Portador', 'CPF', 'Implantado', 'Disponível', 'Despesas']
+            ];
+
+            const rows = filteredData.map(item => [
+                item.origemLabel,
+                item.nte,
+                item.municipio,
+                item.codigoSec,
+                item.codigoInep,
+                item.undEscolar,
+                item.cartao,
+                item.nomePortador,
+                item.cpf,
+                formatCurrency(item.limiteImplantado),
+                formatCurrency(item.limiteDisponivel),
+                formatCurrency(item.despesas)
+            ]);
+
+            // Configurar e gerar tabela
+            doc.autoTable({
+                head: headers,
+                body: rows,
+                startY: 28,
+                theme: 'grid',
+                styles: {
+                    fontSize: 7,
+                    cellPadding: 1.5,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [15, 23, 42],
+                    textColor: [255, 255, 255],
+                    fontSize: 7,
+                    fontStyle: 'bold'
+                },
+                columnStyles: {
+                    0: { cellWidth: 18 },
+                    1: { cellWidth: 16 },
+                    2: { cellWidth: 20 },
+                    3: { cellWidth: 16 },
+                    4: { cellWidth: 16 },
+                    5: { cellWidth: 30 },
+                    6: { cellWidth: 18 },
+                    7: { cellWidth: 28 },
+                    8: { cellWidth: 18 },
+                    9: { cellWidth: 20 },
+                    10: { cellWidth: 20 },
+                    11: { cellWidth: 18 }
+                },
+                didParseCell: function(data) {
+                    // Destacar a coluna CPF
+                    if (data.section === 'body' && data.column.index === 8) {
+                        data.cell.styles.fillColor = [254, 249, 195];
+                        data.cell.styles.textColor = [120, 53, 15];
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            });
+
+            // Rodapé
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(7);
+                doc.setTextColor(150);
+                doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 8);
+            }
+
+            const fileName = `consolidado_recursos_${new Date().toISOString().slice(0,10)}.pdf`;
+            doc.save(fileName);
+        }
+
+        // Event listeners para os botões de exportação
+        document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+        document.getElementById('exportPDF').addEventListener('click', exportToPDF);
+
+        // Filtros
         document.getElementById('selectOrigem').addEventListener('change', applyFilters);
         document.getElementById('selectNTE').addEventListener('change', (e) => {
             const selectedNTE = e.target.value;
