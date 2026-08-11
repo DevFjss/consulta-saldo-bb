@@ -64,12 +64,6 @@
             background-color: #fef9c3 !important;
         }
 
-        .col-highlight-portador {
-            border-left: 2px solid #8b5cf6 !important;
-            border-right: 2px solid #8b5cf6 !important;
-            background-color: #ede9fe !important;
-        }
-
         .resizer {
             position: absolute;
             right: 0;
@@ -359,7 +353,7 @@
                                 <th class="px-4 py-3.5 col-idx-4" style="width: 120px;">Código Inep<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-5" style="width: 240px;">Und. Escolar<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-6" style="width: 140px;">Cartão<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-7 col-highlight-portador" style="width: 200px;">Nome Portador<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-7" style="width: 200px;">Nome Portador<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-8 text-amber-300 font-bold" style="width: 140px;">CPF (Col H)<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-9 text-right" style="width: 150px;">Limite Implantado<div class="resizer"></div></th>
                                 <th class="px-4 py-3.5 col-idx-10 text-right" style="width: 150px;">Limite Disponível<div class="resizer"></div></th>
@@ -660,7 +654,7 @@
                     <td class="px-4 py-3 font-mono text-xs col-idx-4">${item.codigoInep}</td>
                     <td class="px-4 py-3 font-medium col-idx-5">${item.undEscolar}</td>
                     <td class="px-4 py-3 font-mono text-xs col-idx-6">${item.cartao}</td>
-                    <td class="px-4 py-3 col-idx-7 col-highlight-portador font-medium text-purple-800">${item.nomePortador}</td>
+                    <td class="px-4 py-3 col-idx-7 font-medium text-slate-700">${item.nomePortador}</td>
                     <td class="px-4 py-3 font-mono text-xs col-idx-8 col-highlight font-bold text-amber-900">${item.cpf}</td>
                     <td class="px-4 py-3 text-right font-medium text-slate-700 col-idx-9">${formatCurrency(item.limiteImplantado)}</td>
                     <td class="px-4 py-3 text-right font-medium text-emerald-700 col-idx-10">${formatCurrency(item.limiteDisponivel)}</td>
