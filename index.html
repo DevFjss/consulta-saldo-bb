@@ -62,6 +62,13 @@
             background-color: #0f172a !important;
             color: #ffffff !important;
             font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        thead th:hover {
+            background-color: #1e293b !important;
         }
 
         .col-highlight {
@@ -84,6 +91,18 @@
         }
         .resizer:hover, .resizer.resizing {
             background: #eab308;
+        }
+
+        .sort-icon {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 10px;
+            opacity: 0.5;
+        }
+
+        .sort-icon.active {
+            opacity: 1;
+            color: #eab308;
         }
 
         .badge-manutencao { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
@@ -256,7 +275,7 @@
                         </div>
                     </div>
 
-                    <!-- Resumo dos 3 Cartões lado a lado -->
+                    <!-- Resumo dos 3 Cartões lado a lado - ORDEM: IMPLANTADO, DESPESAS, DISPONÍVEL -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                         <!-- Manutenção -->
                         <div class="bg-blue-950/60 border border-blue-800/50 p-4 rounded-xl space-y-2">
@@ -267,8 +286,9 @@
                             <div class="text-xs text-slate-300">
                                 Nº Cartão: <strong id="numCartaoManutencao" class="text-blue-300 font-mono">--</strong>
                             </div>
-                            <div class="text-xs text-slate-300">Disp: <strong id="sumDispManutencao" class="text-emerald-400 font-bold">R$ 0,00</strong></div>
-                            <div class="text-xs text-slate-300">Imp: <span id="sumImpManutencao" class="text-white">R$ 0,00</span> | Desp: <span id="sumDespManutencao" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="text-xs text-slate-300">Implantado: <strong id="sumImpManutencao" class="text-white font-bold">R$ 0,00</strong></div>
+                            <div class="text-xs text-slate-300">Despesas: <span id="sumDespManutencao" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="text-xs text-slate-300">Disponível: <span id="sumDispManutencao" class="text-emerald-400 font-bold">R$ 0,00</span></div>
                             <div class="progress-bar">
                                 <div id="progressManutencao" class="fill low" style="width: 0%;"></div>
                             </div>
@@ -288,8 +308,9 @@
                             <div class="text-xs text-slate-300">
                                 Nº Cartão: <strong id="numCartaoPnae" class="text-amber-300 font-mono">--</strong>
                             </div>
-                            <div class="text-xs text-slate-300">Disp: <strong id="sumDispPnae" class="text-emerald-400 font-bold">R$ 0,00</strong></div>
-                            <div class="text-xs text-slate-300">Imp: <span id="sumImpPnae" class="text-white">R$ 0,00</span> | Desp: <span id="sumDespPnae" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="text-xs text-slate-300">Implantado: <strong id="sumImpPnae" class="text-white font-bold">R$ 0,00</strong></div>
+                            <div class="text-xs text-slate-300">Despesas: <span id="sumDespPnae" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="text-xs text-slate-300">Disponível: <span id="sumDispPnae" class="text-emerald-400 font-bold">R$ 0,00</span></div>
                             <div class="progress-bar">
                                 <div id="progressPnae" class="fill low" style="width: 0%;"></div>
                             </div>
@@ -309,8 +330,9 @@
                             <div class="text-xs text-slate-300">
                                 Nº Cartão: <strong id="numCartaoFaed" class="text-slate-300 font-mono">--</strong>
                             </div>
-                            <div class="text-xs text-slate-300">Disp: <strong id="sumDispFaed" class="text-emerald-400 font-bold">R$ 0,00</strong></div>
-                            <div class="text-xs text-slate-300">Imp: <span id="sumImpFaed" class="text-white">R$ 0,00</span> | Desp: <span id="sumDespFaed" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="text-xs text-slate-300">Implantado: <strong id="sumImpFaed" class="text-white font-bold">R$ 0,00</strong></div>
+                            <div class="text-xs text-slate-300">Despesas: <span id="sumDespFaed" class="text-amber-300">R$ 0,00</span></div>
+                            <div class="text-xs text-slate-300">Disponível: <span id="sumDispFaed" class="text-emerald-400 font-bold">R$ 0,00</span></div>
                             <div class="progress-bar">
                                 <div id="progressFaed" class="fill low" style="width: 0%;"></div>
                             </div>
@@ -378,18 +400,66 @@
                     <table id="dataTable" class="text-left text-sm">
                         <thead>
                             <tr>
-                                <th class="px-4 py-3.5 col-idx-0" style="width: 150px;">Aba Origem<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-1" style="width: 100px;">NTE<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-2" style="width: 150px;">Município<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-3" style="width: 120px;">Código SEC<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-4" style="width: 120px;">Código Inep<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-5" style="width: 240px;">Und. Escolar<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-6" style="width: 140px;">Cartão<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-7" style="width: 200px;">Nome Portador<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-8 text-amber-300 font-bold" style="width: 140px;">CPF (Col H)<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-9 text-right" style="width: 150px;">Limite Implantado<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-10 text-right" style="width: 150px;">Limite Disponível<div class="resizer"></div></th>
-                                <th class="px-4 py-3.5 col-idx-11 text-right" style="width: 140px;">Despesas (Col L)<div class="resizer"></div></th>
+                                <th class="px-4 py-3.5 col-idx-0" data-col="0" style="width: 150px;">
+                                    Aba Origem
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-1" data-col="1" style="width: 100px;">
+                                    NTE
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-2" data-col="2" style="width: 150px;">
+                                    Município
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-3" data-col="3" style="width: 120px;">
+                                    Código SEC
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-4" data-col="4" style="width: 120px;">
+                                    Código Inep
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-5" data-col="5" style="width: 240px;">
+                                    Und. Escolar
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-6" data-col="6" style="width: 140px;">
+                                    Cartão
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-7" data-col="7" style="width: 200px;">
+                                    Nome Portador
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-8 text-amber-300 font-bold" data-col="8" style="width: 140px;">
+                                    CPF (Col H)
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-9 text-right" data-col="9" style="width: 150px;">
+                                    Limite Implantado
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-10 text-right" data-col="10" style="width: 150px;">
+                                    Limite Disponível
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
+                                <th class="px-4 py-3.5 col-idx-11 text-right" data-col="11" style="width: 140px;">
+                                    Despesas (Col L)
+                                    <span class="sort-icon">⇅</span>
+                                    <div class="resizer"></div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700">
@@ -417,6 +487,7 @@
 
         let rawData = [];
         let filteredData = [];
+        let sortConfig = { col: -1, asc: true };
 
         lucide.createIcons();
 
@@ -504,6 +575,7 @@
                 populateMunicipioDropdown();
                 applyFilters();
                 initResizableColumns();
+                initSortableColumns();
 
             } catch (error) {
                 console.error("Erro ao carregar sheets:", error);
@@ -570,9 +642,108 @@
                 return matchOrigem && matchNTE && matchMun && matchSEC && matchCPF && matchPortador;
             });
 
+            // Aplicar ordenação se houver
+            if (sortConfig.col >= 0) {
+                sortData();
+            }
+
             updatePortadorDisplay(secVal, cpfVal, portadorVal);
             updateCards();
             renderTable();
+        }
+
+        // Função de ordenação
+        function sortData() {
+            const col = sortConfig.col;
+            const asc = sortConfig.asc;
+
+            // Mapeamento de colunas para as propriedades dos dados
+            const colMap = {
+                0: 'origemLabel',
+                1: 'nte',
+                2: 'municipio',
+                3: 'codigoSec',
+                4: 'codigoInep',
+                5: 'undEscolar',
+                6: 'cartao',
+                7: 'nomePortador',
+                8: 'cpf',
+                9: 'limiteImplantado',
+                10: 'limiteDisponivel',
+                11: 'despesas'
+            };
+
+            const key = colMap[col];
+            if (!key) return;
+
+            filteredData.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+
+                // Tratamento especial para valores numéricos (colunas 9, 10, 11)
+                if ([9, 10, 11].includes(col)) {
+                    valA = Number(valA) || 0;
+                    valB = Number(valB) || 0;
+                    return asc ? valA - valB : valB - valA;
+                }
+
+                // Tratamento para strings
+                if (typeof valA === 'string') {
+                    valA = valA.toLowerCase().trim();
+                }
+                if (typeof valB === 'string') {
+                    valB = valB.toLowerCase().trim();
+                }
+
+                if (valA < valB) return asc ? -1 : 1;
+                if (valA > valB) return asc ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // Inicializar ordenação por clique no cabeçalho
+        function initSortableColumns() {
+            const headers = document.querySelectorAll('#dataTable thead th');
+            headers.forEach((th, index) => {
+                th.addEventListener('click', (e) => {
+                    // Ignorar clique no resizer
+                    if (e.target.classList.contains('resizer')) return;
+
+                    const col = parseInt(th.dataset.col);
+                    
+                    if (sortConfig.col === col) {
+                        sortConfig.asc = !sortConfig.asc;
+                    } else {
+                        sortConfig.col = col;
+                        sortConfig.asc = true;
+                    }
+
+                    // Atualizar ícones
+                    updateSortIcons(th);
+
+                    // Aplicar ordenação e re-renderizar
+                    if (filteredData.length > 0) {
+                        sortData();
+                        renderTable();
+                    }
+                });
+            });
+        }
+
+        function updateSortIcons(activeHeader) {
+            const allHeaders = document.querySelectorAll('#dataTable thead th');
+            const allIcons = document.querySelectorAll('#dataTable thead th .sort-icon');
+            
+            allIcons.forEach(icon => {
+                icon.textContent = '⇅';
+                icon.classList.remove('active');
+            });
+
+            const activeIcon = activeHeader.querySelector('.sort-icon');
+            if (activeIcon) {
+                activeIcon.textContent = sortConfig.asc ? '▲' : '▼';
+                activeIcon.classList.add('active');
+            }
         }
 
         // Atualiza a visualização com os valores somados/separados dos 3 cartões para a busca
@@ -601,8 +772,8 @@
                     return {
                         cartao: cartaoUnico,
                         imp: filtered.reduce((acc, c) => acc + c.limiteImplantado, 0),
-                        disp: filtered.reduce((acc, c) => acc + c.limiteDisponivel, 0),
-                        desp: filtered.reduce((acc, c) => acc + c.despesas, 0)
+                        desp: filtered.reduce((acc, c) => acc + c.despesas, 0),
+                        disp: filtered.reduce((acc, c) => acc + c.limiteDisponivel, 0)
                     };
                 };
 
@@ -670,6 +841,17 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="text-center py-8 text-slate-500">
+                            Nenhum registro encontrado com os filtros atuais.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
             filteredData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-100";
@@ -704,6 +886,7 @@
 
                 resizer.addEventListener('mousedown', (e) => {
                     e.preventDefault();
+                    e.stopPropagation(); // Evitar que o clique no resizer ative a ordenação
                     th = resizer.parentElement;
                     startX = e.pageX;
                     startWidth = th.offsetWidth;
@@ -767,7 +950,6 @@
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(data);
 
-            // Ajustar largura das colunas
             const colWidths = [
                 { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
                 { wch: 30 }, { wch: 16 }, { wch: 28 }, { wch: 16 },
@@ -791,18 +973,15 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape', 'mm', 'a4');
 
-            // Título
             doc.setFontSize(14);
             doc.setTextColor(30, 58, 138);
             doc.text('Painel Consolidado de Recursos - Manutenção, PNAE e FAED', 14, 15);
 
-            // Subtítulo com data
             doc.setFontSize(10);
             doc.setTextColor(100);
             const dataAtual = new Date().toLocaleDateString('pt-BR');
             doc.text(`Data de exportação: ${dataAtual}`, 14, 22);
 
-            // Preparar dados para a tabela
             const headers = [
                 ['Aba', 'NTE', 'Município', 'SEC', 'Inep', 'Unidade Escolar', 
                  'Cartão', 'Portador', 'CPF', 'Implantado', 'Disponível', 'Despesas']
@@ -823,7 +1002,6 @@
                 formatCurrency(item.despesas)
             ]);
 
-            // Configurar e gerar tabela
             doc.autoTable({
                 head: headers,
                 body: rows,
@@ -855,7 +1033,6 @@
                     11: { cellWidth: 18 }
                 },
                 didParseCell: function(data) {
-                    // Destacar a coluna CPF
                     if (data.section === 'body' && data.column.index === 8) {
                         data.cell.styles.fillColor = [254, 249, 195];
                         data.cell.styles.textColor = [120, 53, 15];
@@ -864,7 +1041,6 @@
                 }
             });
 
-            // Rodapé
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
@@ -877,11 +1053,9 @@
             doc.save(fileName);
         }
 
-        // Event listeners para os botões de exportação
         document.getElementById('exportExcel').addEventListener('click', exportToExcel);
         document.getElementById('exportPDF').addEventListener('click', exportToPDF);
 
-        // Filtros
         document.getElementById('selectOrigem').addEventListener('change', applyFilters);
         document.getElementById('selectNTE').addEventListener('change', (e) => {
             const selectedNTE = e.target.value;
@@ -901,6 +1075,14 @@
             document.getElementById('searchSEC').value = '';
             document.getElementById('searchCPF').value = '';
             document.getElementById('searchPortador').value = '';
+            // Resetar ordenação
+            sortConfig.col = -1;
+            sortConfig.asc = true;
+            const allIcons = document.querySelectorAll('#dataTable thead th .sort-icon');
+            allIcons.forEach(icon => {
+                icon.textContent = '⇅';
+                icon.classList.remove('active');
+            });
             applyFilters();
         });
 
